@@ -15,33 +15,30 @@ max_height = 720
 
 dataset_dir = f'{project_dir}/data/raw'
 
-load_range = (0, 30)
+frag_range = range(100, 150)
 
 def main():
-    model = None
+    model = models.load_model(project_dir + '/model.keras')
+    model.summary()
+    exit()
+
     image_labels = labels.load_labels(dataset_dir + '/mos.csv')
     imgpaths = os.listdir(dataset_dir + '/images')
     print(f"detected:\nimages: {len(imgpaths)}\nlabels: {len(image_labels)}")
 
-    x_train = []
-    for i in tqdm.tqdm(range(load_range[0], load_range[1])):
-        image = images.load_img(f'{dataset_dir}/images/{imgpaths[i]}')
+    range_str = f'{frag_range.start}-{frag_range.stop}'
 
-        resized = images.resize_image(image, max_width, max_height)
-        # resized = images.pad_image(image, max_width, max_height)
+    print('starting with range: ' + range_str)
 
-        x_train.append(resized)
-
-    y_train = image_labels[load_range[0]:load_range[1]]
-    
-    x_train = np.array(x_train, dtype=np.float16)
-    y_train = np.array(y_train, dtype=np.float16)
+    x_train = np.load(f'{project_dir}/data/processed/dataset_{range_str}.npy', mmap_mode='r')
+    y_train = image_labels[frag_range.start:frag_range.stop]
+    y_train = np.array(y_train)
 
     print(f"x_train type: {type(x_train)} shape: {x_train.shape}, type: {x_train.dtype}")
     print(f"y_train type: {type(y_train)} shape: {y_train.shape}, type: {y_train.dtype}")
 
-
-    model = models.init_model(max_width, max_height)
+    model = models.load_model(project_dir + '/model.keras')
+    # model = models.init_model(max_width, max_height)
     model = models.train_model(model, x_train, y_train, epochs, batch_size)
     
     models.save_model(model, project_dir + '/model.keras')
