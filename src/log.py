@@ -16,12 +16,12 @@ def read_status():
     
     return {'epoch': epoch, 'batch': batch}
 
-def write_status(epoch, batch):
+def write_status(status):
     config = configparser.ConfigParser()
     
     config['progress'] = {
-        'epoch': epoch,
-        'batch': batch
+        'epoch': status['epoch'],
+        'batch': status['batch']
     }
     
     with open(STATUS_FILE, 'w') as configfile:
