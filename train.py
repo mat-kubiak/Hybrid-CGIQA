@@ -4,7 +4,7 @@ import numpy as np
 project_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(f'{project_dir}/src')
 
-import images, labels, log, models, props
+import images, labels, log, models
 
 # path to the database containing the images and mos.csv
 # change according to your needs
