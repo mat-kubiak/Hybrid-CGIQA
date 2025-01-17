@@ -1,7 +1,8 @@
+import os
 from tensorflow import keras
 
-import tensorflow as tf
-tf.config.set_visible_devices([], 'GPU')
+def model_exists(path):
+    return os.path.isfile(path)
 
 def init_model(max_height, max_width):
     model = keras.Sequential([
