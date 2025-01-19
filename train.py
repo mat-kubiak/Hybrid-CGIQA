@@ -12,7 +12,7 @@ DATA_PATH = f'{project_dir}/data'
 
 MODEL_PATH = f'{project_dir}/model.keras'
 MOS_PATH = f'{DATA_PATH}/mos.csv'
-IMG_DIRPATH = f'{DATA_PATH}/images'
+IMG_DIRPATH = f'{DATA_PATH}/images/train'
 
 MAX_HEIGHT = 1080
 MAX_WIDTH = 1920
@@ -29,7 +29,7 @@ def main():
     global status, mos, model
     log.logprint("Program starting up...")
 
-    mos = labels.load_labels(MOS_PATH)
+    mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
     log.logprint(f"Loaded {mos.shape[0]} labels")
     if (mos.shape[0] == 0):
         los.logprint("Fatal error: no labels found")
