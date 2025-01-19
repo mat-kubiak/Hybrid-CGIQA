@@ -1,4 +1,4 @@
-import os, sys, time, signal
+import os, sys, time, signal, math
 import numpy as np
 import tqdm
 
@@ -18,10 +18,11 @@ IMG_DIRPATH = f'{DATA_PATH}/images/train'
 MAX_HEIGHT = 1080
 MAX_WIDTH = 1920
 BATCH_SIZE = 10
+BATCHES = None
 
 # Debug Mode
 # put to true to simulate logic without actually training
-DEBUG = False
+DEBUG = True
 
 status = None
 mos = None
@@ -32,7 +33,7 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 def main():
-    global status, mos, model
+    global status, mos, model, BATCHES
     log.logprint("Program starting up...")
     if DEBUG:
         log.logprint("Started with DEBUG=True")
@@ -64,6 +65,9 @@ def main():
     # load image list
     img_list = images.get_image_list(IMG_DIRPATH)
     log.logprint(f"Found {len(img_list)} images")
+    if len(img_list) % BATCH_SIZE != 0:
+        log.logprint("Warning: number of images is not divisible by batch size")
+    BATCHES = math.floor(len(img_list)/BATCH_SIZE)
 
     running = True
     while(running):
@@ -73,23 +77,26 @@ def main():
 
         # prepare images
         x_train = np.zeros((BATCH_SIZE, MAX_HEIGHT, MAX_WIDTH, 3))
-        for i in tqdm.tqdm(range(start_i, end_i)):
-            img_path = f"{IMG_DIRPATH}/{img_list[i]}"
+        for i in tqdm.tqdm(range(0, BATCH_SIZE)):
+            img_path = f"{IMG_DIRPATH}/{img_list[start_i + i]}"
             img = images.load_img(img_path)
             img = images.prepare_img_for_size(img, MAX_WIDTH, MAX_HEIGHT)
+            
             x_train[i, :, :, :] = img
         
         # prepare labels
         y_train = mos[start_i:end_i, :]
-        print(y_train.shape)
 
         # train
         if not DEBUG:
             model = models.train_model(model, x_train, y_train, 1, BATCH_SIZE)
+        
         status['batch'] += 1
+        log.logprint(f"training batch {status['batch']}/{BATCHES} completed...")
+        
         log.write_status(status)
-        models.save_model(model)
-        log.logprint("saved")
+        models.save_model(model, MODEL_PATH)
+        log.logprint(f"Saved status and model for batch {status['batch']}/{BATCHES}")
 
         running = False
     

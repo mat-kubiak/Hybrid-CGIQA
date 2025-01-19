@@ -167,3 +167,4 @@ data/
 status.ini
 log.txt
 nohup.out
+model.keras
