@@ -19,6 +19,7 @@ MAX_HEIGHT = 1080
 MAX_WIDTH = 1920
 BATCH_SIZE = 10
 BATCHES = None
+EPOCHS = 10
 
 # Debug Mode
 # put to true to simulate logic without actually training
@@ -78,6 +79,8 @@ def main():
         # prepare images
         x_train = np.zeros((BATCH_SIZE, MAX_HEIGHT, MAX_WIDTH, 3))
         for i in tqdm.tqdm(range(0, BATCH_SIZE)):
+            if DEBUG:
+                continue
             img_path = f"{IMG_DIRPATH}/{img_list[start_i + i]}"
             img = images.load_img(img_path)
             img = images.prepare_img_for_size(img, MAX_WIDTH, MAX_HEIGHT)
@@ -92,14 +95,22 @@ def main():
             model = models.train_model(model, x_train, y_train, 1, BATCH_SIZE)
         
         status['batch'] += 1
-        log.logprint(f"training batch {status['batch']}/{BATCHES} completed...")
+        if (status['batch'] >= BATCHES):
+            status['epoch'] += 1
+            status['batch'] = 0
+            log.logprint(f"training for epoch {status['epoch']}/{EPOCHS} completed")
         
+        log.logprint(f"training batch {status['batch']}/{BATCHES} of epoch {status['epoch']}/{EPOCHS} completed")
+
+        if (status['epoch'] >= EPOCHS):
+            log.logprint(f"Achieved a goal of {EPOCHS} epochs, training is completed")
+            running = False
+
+        log.logprint(f"Saving status and model...")
         log.write_status(status)
         if not DEBUG:
             models.save_model(model, MODEL_PATH)
-        log.logprint(f"Saved status and model for batch {status['batch']}/{BATCHES}")
-
-        running = False
+        log.logprint(f"Saved status and model")
     
     log.logprint("Program completed")
 
