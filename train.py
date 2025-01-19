@@ -22,7 +22,7 @@ BATCHES = None
 
 # Debug Mode
 # put to true to simulate logic without actually training
-DEBUG = True
+DEBUG = False
 
 status = None
 mos = None
@@ -95,7 +95,8 @@ def main():
         log.logprint(f"training batch {status['batch']}/{BATCHES} completed...")
         
         log.write_status(status)
-        models.save_model(model, MODEL_PATH)
+        if not DEBUG:
+            models.save_model(model, MODEL_PATH)
         log.logprint(f"Saved status and model for batch {status['batch']}/{BATCHES}")
 
         running = False
