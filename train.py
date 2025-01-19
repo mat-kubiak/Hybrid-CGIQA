@@ -19,6 +19,10 @@ MAX_HEIGHT = 1080
 MAX_WIDTH = 1920
 BATCH_SIZE = 10
 
+# Debug Mode
+# put to true to simulate logic without actually training
+DEBUG = False
+
 status = None
 mos = None
 model = None
@@ -30,6 +34,8 @@ def signal_handler(sig, frame):
 def main():
     global status, mos, model
     log.logprint("Program starting up...")
+    if DEBUG:
+        log.logprint("Started with DEBUG=True")
 
     mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
     log.logprint(f"Loaded {mos.shape[0]} labels")
@@ -78,7 +84,8 @@ def main():
         print(y_train.shape)
 
         # train
-        model = models.train_model(model, x_train, y_train, 1, BATCH_SIZE)
+        if not DEBUG:
+            model = models.train_model(model, x_train, y_train, 1, BATCH_SIZE)
         status['batch'] += 1
         log.write_status(status)
         models.save_model(model)
