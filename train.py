@@ -1,5 +1,6 @@
 import os, sys, time, signal
 import numpy as np
+import tqdm
 
 project_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(f'{project_dir}/src')
@@ -16,6 +17,7 @@ IMG_DIRPATH = f'{DATA_PATH}/images/train'
 
 MAX_HEIGHT = 1080
 MAX_WIDTH = 1920
+BATCH_SIZE = 10
 
 status = None
 mos = None
@@ -53,7 +55,36 @@ def main():
             log.logprint(f"Fatal Error: Could not load model file: {e}")
             sys.exit(1)
     
-    # TODO: load image batch and train
+    # load image list
+    img_list = images.get_image_list(IMG_DIRPATH)
+    log.logprint(f"Found {len(img_list)} images")
+
+    running = True
+    while(running):
+        
+        start_i = status['batch'] * BATCH_SIZE
+        end_i = (status['batch'] + 1) * BATCH_SIZE
+
+        # prepare images
+        x_train = np.zeros((BATCH_SIZE, MAX_HEIGHT, MAX_WIDTH, 3))
+        for i in tqdm.tqdm(range(start_i, end_i)):
+            img_path = f"{IMG_DIRPATH}/{img_list[i]}"
+            img = images.load_img(img_path)
+            img = images.prepare_img_for_size(img, MAX_WIDTH, MAX_HEIGHT)
+            x_train[i, :, :, :] = img
+        
+        # prepare labels
+        y_train = mos[start_i:end_i, :]
+        print(y_train.shape)
+
+        # train
+        model = models.train_model(model, x_train, y_train, 1, BATCH_SIZE)
+        status['batch'] += 1
+        log.write_status(status)
+        models.save_model(model)
+        log.logprint("saved")
+
+        running = False
     
     log.logprint("Program completed")
 
