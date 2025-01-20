@@ -21,6 +21,6 @@ def load_labels(mos_path, images_path):
     normalized = np.round(mos_values * 0.8 + 1.0, 1)
 
     # encode in matrix
-    one_hot_encoded = np.array([np.eye(41)[int((num - 1.0) * 10)] for num in normalized])
+    one_hot_encoded = np.array([np.eye(41)[int((num - 1.0) * 10)] for num in normalized], dtype=np.float32)
 
     return one_hot_encoded
