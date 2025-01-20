@@ -1,4 +1,5 @@
 import os, sys
+import tensorflow as tf
 
 project_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(f'{project_dir}/src')
