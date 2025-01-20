@@ -21,9 +21,13 @@ RATINGS = 41 # range 1.0, 5.0 with step 0.1
 TEST_BATCH_SIZE = 5
 
 def load_img(path, label):
-    img = images.load_img(path)
-    img = images.prepare_img_for_size(img, MAX_WIDTH, MAX_HEIGHT)
-    return img, label
+    image = tf.io.read_file(path)
+    image = tf.image.decode_jpeg(image, channels=3)
+
+    image = tf.image.resize_with_pad(image, MAX_HEIGHT, MAX_WIDTH)
+    
+    image = tf.cast(image, tf.float32) / 255.0
+    return image, label
 
 def main():
 
