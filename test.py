@@ -40,7 +40,7 @@ def main():
 
     # image paths
     image_paths = images.get_image_list(IMG_DIRPATH)
-    image_paths = IMG_DIRPATH + image_paths
+    image_paths = IMG_DIRPATH + "/" + image_paths
 
     print(image_paths.shape)
     print(mos.shape)
