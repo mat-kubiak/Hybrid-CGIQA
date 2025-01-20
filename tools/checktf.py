@@ -1,5 +1,9 @@
+import os
 import tensorflow as tf
 import matplotlib.pyplot as plt
+
+project_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.dirname(project_dir)
 
 def load_image(image_path):
     image = tf.io.read_file(image_path)
@@ -10,8 +14,8 @@ def save_image(image, output_path):
     encoded_image = tf.image.encode_jpeg(image)
     tf.io.write_file(output_path, encoded_image)
 
-input_image_path = './data/images/test/movie_1488.jpg'
-output_image_path = './output.jpg'
+input_image_path = f'{project_dir}/data/images/test/movie_1488.jpg'
+output_image_path = f'{project_dir}/output.jpg'
 
 image = load_image(input_image_path)
 
