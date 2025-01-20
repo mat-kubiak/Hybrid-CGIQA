@@ -20,7 +20,7 @@ RATINGS = 41 # range 1.0, 5.0 with step 0.1
 
 TEST_BATCH_SIZE = 5
 
-def load_img(path):
+def load_img(path, label):
     img = images.load_img(path)
     return images.prepare_img_for_size(img, MAX_WIDTH, MAX_HEIGHT)
 
