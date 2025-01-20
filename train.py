@@ -18,7 +18,7 @@ IMG_DIRPATH = f'{DATA_PATH}/images/train'
 MAX_HEIGHT = 1080
 MAX_WIDTH = 1920
 RATINGS = 41 # range 1.0, 5.0 with step 0.1
-BATCH_SIZE = 1
+BATCH_SIZE = 5
 BATCHES = None
 EPOCHS = 10
 
