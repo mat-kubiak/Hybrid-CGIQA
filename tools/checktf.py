@@ -14,7 +14,7 @@ def save_image(image, output_path):
     encoded_image = tf.image.encode_jpeg(image)
     tf.io.write_file(output_path, encoded_image)
 
-input_image_path = f'{project_dir}/data/images/movie/movie_1488.jpg'
+input_image_path = f'{project_dir}/data/images/train/movie_1488.jpg'
 output_image_path = f'{project_dir}/output.jpg'
 
 image = load_image(input_image_path)
