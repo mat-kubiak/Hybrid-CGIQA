@@ -27,14 +27,17 @@ def load_img(path, label):
 
     height, width = tf.shape(image)[0], tf.shape(image)[1]
 
+    # the same
+    if height == MAX_HEIGHT and width == MAX_WIDTH:
+        return image, label
+
     # smaller - only pad
-    if height < MAX_HEIGHT and width < MAX_WIDTH:
+    if height <= MAX_HEIGHT and width <= MAX_WIDTH:
         image = tf.image.resize_with_crop_or_pad(image, MAX_HEIGHT, MAX_WIDTH)
+        return image, label
 
     # bigger in 1 or 2 dims - resize and pad
-    if height > MAX_HEIGHT or width > MAX_WIDTH:
-        image = tf.image.resize_with_pad(image, MAX_HEIGHT, MAX_WIDTH)
-
+    image = tf.image.resize_with_pad(image, MAX_HEIGHT, MAX_WIDTH)
     return image, label
 
 def main():
