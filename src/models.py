@@ -4,7 +4,7 @@ from tensorflow import keras
 def model_exists(path):
     return os.path.isfile(path)
 
-def init_model(max_height, max_width):
+def init_model(max_height, max_width, ratings):
     model = keras.Sequential([
         keras.layers.Input(shape=(max_height, max_width, 3)),
         keras.layers.Conv2D(64, kernel_size=(3, 3), activation="relu"),
@@ -17,13 +17,13 @@ def init_model(max_height, max_width):
         keras.layers.Dense(1024),
         keras.layers.Dense(512),
         keras.layers.Dropout(0.5),
-        keras.layers.Dense(1, activation="linear"),
+        keras.layers.Dense(ratings, activation="softmax"),
     ])
 
     model.compile(
-        optimizer = keras.optimizers.Adam(),
-        loss = keras.losses.MeanSquaredError(),
-        metrics=["mae"]
+        optimizer=keras.optimizers.SGD(learning_rate=0.01, momentum=0.9),
+        loss=keras.losses.CategoricalCrossentropy(),
+        metrics=["accuracy"]
     )
 
     return model

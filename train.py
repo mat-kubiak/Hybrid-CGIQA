@@ -17,7 +17,8 @@ IMG_DIRPATH = f'{DATA_PATH}/images/train'
 
 MAX_HEIGHT = 1080
 MAX_WIDTH = 1920
-BATCH_SIZE = 10
+RATINGS = 41 # range 1.0, 5.0 with step 0.1
+BATCH_SIZE = 1
 BATCHES = None
 EPOCHS = 10
 
@@ -53,7 +54,7 @@ def main():
     log.logprint(f"Loaded status file: {status}")
 
     if not models.model_exists(MODEL_PATH):
-        model = models.init_model(MAX_HEIGHT, MAX_WIDTH)
+        model = models.init_model(MAX_HEIGHT, MAX_WIDTH, RATINGS)
         log.logprint(f"Initialized new model with max image dims: {MAX_WIDTH}x{MAX_HEIGHT}")
     else:
         try:
