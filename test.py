@@ -24,8 +24,16 @@ def load_img(path, label):
     image = tf.io.read_file(path)
     image = tf.image.decode_jpeg(image, channels=3)
 
-    image = tf.image.resize_with_pad(image, MAX_HEIGHT, MAX_WIDTH)
-    
+    height, width, _ = image.shape
+
+    # smaller - only pad
+    if height < MAX_HEIGHT and width < MAX_WIDTH:
+        image = tf.image.resize_with_crop_or_pad(image, MAX_HEIGHT, MAX_WIDTH)
+
+    # bigger in 1 or 2 dims - resize and pad
+    if height > MAX_HEIGHT or width > MAX_WIDTH:
+        image = tf.image.resize_with_pad(image, MAX_HEIGHT, MAX_WIDTH)
+
     image = tf.cast(image, tf.float32) / 255.0
     return image, label
 
