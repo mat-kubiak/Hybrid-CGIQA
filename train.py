@@ -43,7 +43,7 @@ def main():
     mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
     log.logprint(f"Loaded {mos.shape[0]} labels")
     if (mos.shape[0] == 0):
-        los.logprint("Fatal error: no labels found")
+        log.logprint("Fatal error: no labels found")
         sys.exit(1)
 
     if not log.status_exists():
@@ -52,6 +52,10 @@ def main():
     
     status = log.read_status()
     log.logprint(f"Loaded status file: {status}")
+
+    if (status['epoch'] >= EPOCHS):
+        log.logprint(f"Target number of epochs {EPOCHS} already achieved. Exiting...")
+        sys.exit(0)
 
     if not models.model_exists(MODEL_PATH):
         model = models.init_model(MAX_HEIGHT, MAX_WIDTH, RATINGS)
