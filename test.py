@@ -14,7 +14,6 @@ DATA_PATH = f'{project_dir}/data'
 MODEL_PATH = f'{project_dir}/model.keras'
 MOS_PATH = f'{DATA_PATH}/mos.csv'
 IMG_DIRPATH = f'{DATA_PATH}/images/test'
-NPY_SAVEFILE = f'{project_dir}/test_data.npy'
 
 MAX_HEIGHT = None
 MAX_WIDTH = None
@@ -25,11 +24,6 @@ TEST_BATCH_SIZE = 5
 def load_img(path, label):
     image = images.load_img(path, MAX_HEIGHT, MAX_WIDTH)
     return image, label
-
-def compute_accuracy(true_labels, predictions):
-    true_labels_category = np.argmax(true_labels, axis=1)
-    accuracy = np.mean(true_labels_category == predictions)
-    return accuracy
 
 def main():
     global MAX_HEIGHT, MAX_WIDTH
@@ -50,22 +44,14 @@ def main():
     MAX_WIDTH = model.input_shape[2]
     print(f"Found dimensions from model: width: {MAX_WIDTH}, height: {MAX_HEIGHT}")
 
-    predictions = None
-    if os.path.isfile(NPY_SAVEFILE):
-        predictions = np.load(NPY_SAVEFILE)
-        print("Loaded test-data from file")
-    else:
-        dataset = tf.data.Dataset.from_tensor_slices((image_paths, mos))
-        dataset = dataset.map(load_img)
-        dataset = dataset.batch(TEST_BATCH_SIZE)
+    dataset = tf.data.Dataset.from_tensor_slices((image_paths, mos))
+    dataset = dataset.map(load_img)
+    dataset = dataset.batch(TEST_BATCH_SIZE)
+    dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-        predictions = model.predict(dataset)
-        np.save(NPY_SAVEFILE, predictions)
-    
-    predicted_categories = np.argmax(predictions, axis=1)
-
-    accuracy = compute_accuracy(mos, predicted_categories)
-    print(f"Classification Accuracy: {accuracy * 100:.2f}%")
+    loss, accuracy = model.evaluate(dataset)
+    print(f"loss: {loss}")
+    print(f"accuracy: {accuracy}")
 
     print("Program finished")
 
