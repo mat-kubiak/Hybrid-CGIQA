@@ -25,10 +25,6 @@ BATCH_SIZE = 5
 BATCHES = None
 EPOCHS = 10
 
-# Debug Mode
-# put to true to simulate logic without actually training
-DEBUG = False
-
 status = None
 mos = None
 model = None
@@ -91,31 +87,32 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
         global status
 
         status['batch'] = batch
-        log.log(f"Completed batch {batch}/{BATCHES} of epoch {status['epoch']}/{EPOCHS} completed")
+        log.log(f"Completed batch {batch}/{BATCHES} of epoch {status['epoch']}/{EPOCHS}")
 
         log.write_status(status)
         log.append_csv_history(HISTORY_PATH, status['batch'], status['epoch'], logs['accuracy'], logs['loss'])
-        models.save_model(self.model, MODEL_PATH)
         
-        log.log(f"Saved status, model and history")
+        log.log(f"Saved status and history")
 
     def on_epoch_end(self, epoch, logs=None):
+        global status
+
         status['epoch'] = epoch
+        status['batch'] = 0
+
         log.log(f"Completed epoch {epoch}/{EPOCHS} completed")
+        
+        log.write_status(status)
+        models.save_model(self.model, MODEL_PATH)
+        
+        log.log(f"Saved model")
 
 def main():
     global status, model
 
     log.logprint("Program starting up...")
-    if DEBUG:
-        log.logprint("Started with DEBUG=True")
     
     initialize_resources()
-
-    if (status['epoch'] >= EPOCHS):
-        log.logprint(f"Target number of epochs {EPOCHS} already achieved. Exiting...")
-        sys.exit(0)
-
     initialize_model()
 
     dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
@@ -125,7 +122,7 @@ def main():
 
     custom_callback = CustomBatchCallback()
 
-    history = model.fit(dataset, verbose=1, epochs=EPOCHS, callbacks=[custom_callback])
+    history = model.fit(dataset, verbose=1, initial_epoch=status['epoch'], epochs=EPOCHS, callbacks=[custom_callback])
     
     log.logprint("Program completed")
 
