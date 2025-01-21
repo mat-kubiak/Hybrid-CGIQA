@@ -29,14 +29,14 @@ DEBUG = False
 status = None
 mos = None
 model = None
-img_list = None
+img_paths = None
 
 def signal_handler(sig, frame):
     log.logprint(f"Received signal {sig}, exiting...")    
     sys.exit(0)
 
 def initialize_resources():
-    global status, mos, img_list, BATCHES
+    global status, mos, img_paths, BATCHES
 
     # load labels
     mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
@@ -47,13 +47,14 @@ def initialize_resources():
         sys.exit(1)
 
     # image list
-    img_list = images.get_image_list(IMG_DIRPATH)
-    log.logprint(f"Found {len(img_list)} images")
+    img_paths = images.get_image_list(IMG_DIRPATH)
+    img_paths = IMG_DIRPATH + "/" + img_paths
+    log.logprint(f"Found {len(img_paths)} images")
 
     # batches
-    if len(img_list) % BATCH_SIZE != 0:
+    if len(img_paths) % BATCH_SIZE != 0:
         log.logprint("Warning: number of images is not divisible by batch size")
-    BATCHES = math.floor(len(img_list)/BATCH_SIZE)
+    BATCHES = math.floor(len(img_paths)/BATCH_SIZE)
 
     # status
     if not log.status_exists():
@@ -79,7 +80,7 @@ def initialize_model():
         sys.exit(1)
 
 def main():
-    global status, mos, model, img_list, BATCHES
+    global status, model
 
     log.logprint("Program starting up...")
     if DEBUG:
@@ -104,8 +105,7 @@ def main():
         for i in tqdm.tqdm(range(0, BATCH_SIZE)):
             if DEBUG:
                 continue
-            img_path = f"{IMG_DIRPATH}/{img_list[start_i + i]}"
-            img = images.load_img(img_path, MAX_HEIGHT, MAX_WIDTH)
+            img = images.load_img(img_paths[start_i + 1], MAX_HEIGHT, MAX_WIDTH)
             
             x_train[i, :, :, :] = img
         
