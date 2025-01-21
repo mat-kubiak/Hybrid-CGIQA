@@ -35,7 +35,7 @@ def main():
     global MAX_HEIGHT, MAX_WIDTH
     mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
     print(f"Loaded {mos.shape[0]} labels")
-    if (mos.shape[0] == 0):
+    if mos.shape[0] == 0:
         print("Fatal error: no labels found")
         sys.exit(1)
 
@@ -63,9 +63,8 @@ def main():
         np.save(NPY_SAVEFILE, predictions)
     
     predicted_categories = np.argmax(predictions, axis=1)
-    true_labels_category = np.argmax(mos, axis=1)
 
-    accuracy = compute_accuracy(true_labels_category, predicted_categories)
+    accuracy = compute_accuracy(mos, predicted_categories)
     print(f"Classification Accuracy: {accuracy * 100:.2f}%")
 
     print("Program finished")
