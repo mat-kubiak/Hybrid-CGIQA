@@ -12,12 +12,14 @@ import images, labels, log, models
 # change according to your needs
 DATA_PATH = f'{project_dir}/data'
 
-MODEL_PATH = f'{project_dir}/model.keras'
-BACKUP_PATH = f'{project_dir}/backup.keras'
-HISTORY_PATH = f'{project_dir}/history.csv'
-
 MOS_PATH = f'{DATA_PATH}/mos.csv'
 IMG_DIRPATH = f'{DATA_PATH}/images/train'
+
+# output
+OUTPUT_DIR = f'{project_dir}/output/'
+MODEL_PATH = f'{OUTPUT_DIR}/model.keras'
+BACKUP_PATH = f'{OUTPUT_DIR}/backup.keras'
+HISTORY_PATH = f'{OUTPUT_DIR}/history.csv'
 
 MAX_HEIGHT = 720
 MAX_WIDTH = 1280
@@ -116,6 +118,9 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
 
 def main():
     global status, model
+
+    if not os.path.exists(OUTPUT_DIR):
+        os.makedirs(OUTPUT_DIR)
 
     log.logprint("Program starting up...")
     
