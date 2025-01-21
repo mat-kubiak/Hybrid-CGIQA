@@ -54,7 +54,7 @@ def main():
 
     predictions = model.predict(dataset)
     predicted_categories = np.argmax(predictions, axis=1)
-    predicted_categories = np.argmax(predictions, axis=1)
+    true_labels_category = np.argmax(mos, axis=1)
 
     accuracy = compute_accuracy(true_labels_category, predicted_categories)
     print(f"Classification Accuracy: {accuracy * 100:.2f}%")
