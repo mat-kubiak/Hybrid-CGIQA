@@ -49,6 +49,7 @@ def main():
     predictions = None
     if os.path.isfile(NPY_SAVEFILE):
         predictions = np.load(NPY_SAVEFILE)
+        print("Loaded test-data from file")
     else:
         dataset = tf.data.Dataset.from_tensor_slices((image_paths, mos))
         dataset = dataset.map(load_img)
