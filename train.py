@@ -87,8 +87,7 @@ def main():
             if DEBUG:
                 continue
             img_path = f"{IMG_DIRPATH}/{img_list[start_i + i]}"
-            img = images.load_img(img_path)
-            img = images.prepare_img_for_size(img, MAX_WIDTH, MAX_HEIGHT)
+            img = images.load_img(img_path, MAX_HEIGHT, MAX_WIDTH)
             
             x_train[i, :, :, :] = img
         
