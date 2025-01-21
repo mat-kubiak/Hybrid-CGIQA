@@ -29,23 +29,33 @@ DEBUG = False
 status = None
 mos = None
 model = None
+img_list = None
 
 def signal_handler(sig, frame):
     log.logprint(f"Received signal {sig}, exiting...")    
     sys.exit(0)
 
-def main():
-    global status, mos, model, BATCHES
-    log.logprint("Program starting up...")
-    if DEBUG:
-        log.logprint("Started with DEBUG=True")
+def initialize_resources():
+    global status, mos, img_list, BATCHES
 
+    # load labels
     mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
     log.logprint(f"Loaded {mos.shape[0]} labels")
+    
     if (mos.shape[0] == 0):
         log.logprint("Fatal error: no labels found")
         sys.exit(1)
 
+    # image list
+    img_list = images.get_image_list(IMG_DIRPATH)
+    log.logprint(f"Found {len(img_list)} images")
+
+    # batches
+    if len(img_list) % BATCH_SIZE != 0:
+        log.logprint("Warning: number of images is not divisible by batch size")
+    BATCHES = math.floor(len(img_list)/BATCH_SIZE)
+
+    # status
     if not log.status_exists():
         log.logprint("Created status file")
         log.write_status({'epoch': 0, 'batch': 0})
@@ -53,28 +63,36 @@ def main():
     status = log.read_status()
     log.logprint(f"Loaded status file: {status}")
 
-    if (status['epoch'] >= EPOCHS):
-        log.logprint(f"Target number of epochs {EPOCHS} already achieved. Exiting...")
-        sys.exit(0)
+def initialize_model():
+    global model
 
     if not models.model_exists(MODEL_PATH):
         model = models.init_model(MAX_HEIGHT, MAX_WIDTH, RATINGS)
         log.logprint(f"Initialized new model with max image dims: {MAX_WIDTH}x{MAX_HEIGHT}")
-    else:
-        try:
-            model = models.load_model(MODEL_PATH)
-            log.logprint(f"Loaded model from file")
-        except Exception as e:
-            log.logprint(f"Fatal Error: Could not load model file: {e}")
-            sys.exit(1)
+        return
     
-    # load image list
-    img_list = images.get_image_list(IMG_DIRPATH)
-    log.logprint(f"Found {len(img_list)} images")
-    if len(img_list) % BATCH_SIZE != 0:
-        log.logprint("Warning: number of images is not divisible by batch size")
-    BATCHES = math.floor(len(img_list)/BATCH_SIZE)
+    try:
+        model = models.load_model(MODEL_PATH)
+        log.logprint(f"Loaded model from file")
+    except Exception as e:
+        log.logprint(f"Fatal Error: Could not load model file: {e}")
+        sys.exit(1)
 
+def main():
+    global status, mos, model, img_list, BATCHES
+
+    log.logprint("Program starting up...")
+    if DEBUG:
+        log.logprint("Started with DEBUG=True")
+    
+    initialize_resources()
+
+    if (status['epoch'] >= EPOCHS):
+        log.logprint(f"Target number of epochs {EPOCHS} already achieved. Exiting...")
+        sys.exit(0)
+
+    initialize_model()
+    
     running = True
     while(running):
         
