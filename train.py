@@ -15,8 +15,8 @@ MODEL_PATH = f'{project_dir}/model.keras'
 MOS_PATH = f'{DATA_PATH}/mos.csv'
 IMG_DIRPATH = f'{DATA_PATH}/images/train'
 
-MAX_HEIGHT = 1080
-MAX_WIDTH = 1920
+MAX_HEIGHT = 720
+MAX_WIDTH = 1280
 RATINGS = 41 # range 1.0, 5.0 with step 0.1
 BATCH_SIZE = 5
 BATCHES = None
