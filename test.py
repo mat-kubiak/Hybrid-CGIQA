@@ -16,8 +16,8 @@ MOS_PATH = f'{DATA_PATH}/mos.csv'
 IMG_DIRPATH = f'{DATA_PATH}/images/test'
 NPY_SAVEFILE = f'{project_dir}/test_data.npy'
 
-MAX_HEIGHT = 1080
-MAX_WIDTH = 1920
+MAX_HEIGHT = None
+MAX_WIDTH = None
 RATINGS = 41  # Range 1.0 to 5.0 with step 0.1 (41 distinct ratings)
 
 TEST_BATCH_SIZE = 5
@@ -32,6 +32,7 @@ def compute_accuracy(true_labels, predictions):
     return accuracy
 
 def main():
+    global MAX_HEIGHT, MAX_WIDTH
     mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
     print(f"Loaded {mos.shape[0]} labels")
     if (mos.shape[0] == 0):
@@ -45,6 +46,9 @@ def main():
         print("Fatal error: no model found")
         sys.exit(1)
     model = models.load_model(MODEL_PATH)
+    MAX_HEIGHT = model.input_shape[1]
+    MAX_WIDTH = model.input_shape[2]
+    print(f"Found dimensions from model: width: {MAX_WIDTH}, height: {MAX_HEIGHT}")
 
     predictions = None
     if os.path.isfile(NPY_SAVEFILE):
