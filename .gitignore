@@ -165,7 +165,5 @@ cython_debug/
 
 data/
 models/
-status.ini
-log.txt
+output/
 nohup.out
-model.keras
