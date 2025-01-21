@@ -25,16 +25,10 @@ def load_img(path, label):
     image = images.load_img(path, MAX_HEIGHT, MAX_WIDTH)
     return image, label
 
-def compute_metrics(true_labels, predictions):
-    # Convert one-hot labels to continuous values
-    true_labels_continuous = np.argmax(true_labels, axis=1) * 0.1 + 1.0
-    # Calculate Mean Absolute Error (MAE)
-    mae = np.mean(np.abs(true_labels_continuous - predictions))
-    # Calculate Mean Squared Error (MSE)
-    mse = np.mean((true_labels_continuous - predictions) ** 2)
-    # Calculate Pearson Correlation Coefficient
-    correlation = np.corrcoef(true_labels_continuous, predictions)[0, 1]
-    return mae, mse, correlation
+def compute_accuracy(true_labels, predictions):
+    true_labels_category = np.argmax(true_labels, axis=1)
+    accuracy = np.mean(true_labels_category == predictions)
+    return accuracy
 
 def main():
     mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
@@ -58,22 +52,12 @@ def main():
     dataset = dataset.map(load_img)
     dataset = dataset.batch(TEST_BATCH_SIZE)
 
-    # Predict and collect results
-    predictions = []
-    true_labels = []
-    for image_batch, label_batch in dataset:
-        prediction_batch = model.predict(image_batch)
-        predictions.extend(prediction_batch)
-        true_labels.extend(label_batch.numpy())
+    predictions = model.predict(dataset)
+    predicted_categories = np.argmax(predictions, axis=1)
+    predicted_categories = np.argmax(predictions, axis=1)
 
-    predictions = np.array(predictions)
-    true_labels = np.array(true_labels)
-
-    # Evaluate metrics
-    mae, mse, correlation = compute_metrics(true_labels, predictions)
-    print(f"Mean Absolute Error: {mae}")
-    print(f"Mean Squared Error: {mse}")
-    print(f"Pearson Correlation Coefficient: {correlation}")
+    accuracy = compute_accuracy(true_labels_category, predicted_categories)
+    print(f"Classification Accuracy: {accuracy * 100:.2f}%")
 
     print("Program finished")
 
