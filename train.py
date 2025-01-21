@@ -95,8 +95,8 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
     def on_batch_end(self, batch, logs=None):
         global status
 
-        status['batch'] = batch
-        log.log(f"Completed batch {batch}/{BATCHES} of epoch {status['epoch']}/{EPOCHS}")
+        status['batch'] = batch + 1
+        log.log(f"Completed batch {status['batch']}/{BATCHES} of epoch {status['epoch']}/{EPOCHS}")
 
         log.write_status(status)
         log.append_csv_history(HISTORY_PATH, status['batch'], status['epoch'], logs['accuracy'], logs['loss'])
@@ -106,10 +106,10 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         global status
 
-        status['epoch'] = epoch
+        status['epoch'] = epoch + 1
         status['batch'] = 0
 
-        log.log(f"Completed epoch {epoch}/{EPOCHS} completed")
+        log.log(f"Completed epoch {status['epoch']}/{EPOCHS} completed")
         
         log.write_status(status)
         models.save_model(self.model, MODEL_PATH)
