@@ -13,6 +13,7 @@ import images, labels, log, models
 DATA_PATH = f'{project_dir}/data'
 
 MODEL_PATH = f'{project_dir}/model.keras'
+BACKUP_PATH = f'{project_dir}/backup.keras'
 HISTORY_PATH = f'{project_dir}/history.csv'
 
 MOS_PATH = f'{DATA_PATH}/mos.csv'
@@ -31,7 +32,13 @@ model = None
 img_paths = None
 
 def signal_handler(sig, frame):
-    log.logprint(f"Received signal {sig}, exiting...")    
+    global status
+    log.logprint(f"Received signal {sig}")
+    
+    models.save_model(model, BACKUP_PATH)
+
+    log.logprint(f"Backup saved at batch {status['batch']}/{BATCHES} epoch {status['epoch']}/{EPOCHS}")
+    log.logprint(f"Exiting...")
     sys.exit(0)
 
 def initialize_resources():
