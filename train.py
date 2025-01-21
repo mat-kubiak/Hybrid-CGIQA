@@ -13,6 +13,8 @@ import images, labels, log, models
 DATA_PATH = f'{project_dir}/data'
 
 MODEL_PATH = f'{project_dir}/model.keras'
+HISTORY_PATH = f'{project_dir}/history.csv'
+
 MOS_PATH = f'{DATA_PATH}/mos.csv'
 IMG_DIRPATH = f'{DATA_PATH}/images/train'
 
@@ -84,6 +86,23 @@ def load_img(path, label):
     image = images.load_img(path, MAX_HEIGHT, MAX_WIDTH)
     return image, label
 
+class CustomBatchCallback(tf.keras.callbacks.Callback):
+    def on_batch_end(self, batch, logs=None):
+        global status
+
+        status['batch'] = batch
+        log.log(f"Completed batch {batch}/{BATCHES} of epoch {status['epoch']}/{EPOCHS} completed")
+
+        log.write_status(status)
+        log.append_csv_history(HISTORY_PATH, status['batch'], status['epoch'], logs['accuracy'], logs['loss'])
+        models.save_model(self.model, MODEL_PATH)
+        
+        log.log(f"Saved status, model and history")
+
+    def on_epoch_end(self, epoch, logs=None):
+        status['epoch'] = epoch
+        log.log(f"Completed epoch {epoch}/{EPOCHS} completed")
+
 def main():
     global status, model
 
@@ -102,9 +121,11 @@ def main():
     dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
     dataset = dataset.map(load_img)
     dataset = dataset.batch(BATCH_SIZE)
+    dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-    history = model.fit(dataset, epochs=1)
-    model.save(MODEL_PATH)
+    custom_callback = CustomBatchCallback()
+
+    history = model.fit(dataset, verbose=1, epochs=EPOCHS, callbacks=[custom_callback])
     
     log.logprint("Program completed")
 
