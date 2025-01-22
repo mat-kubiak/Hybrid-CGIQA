@@ -98,7 +98,7 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
         log.log(LOG_PATH, f"Completed batch {status['batch']}/{BATCHES} of epoch {status['epoch']}/{EPOCHS}")
 
         log.write_status(STATUS_PATH, status)
-        log.append_csv_history(HISTORY_PATH, total_batches, logs['accuracy'], logs['loss'])
+        log.append_csv_history(HISTORY_PATH, total_batches, logs['mean_absolute_error'], logs['loss'])
         
         log.log(LOG_PATH, f"Saved status and history")
 
