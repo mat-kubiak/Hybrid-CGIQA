@@ -15,6 +15,8 @@ def load_labels(mos_path, images_path):
 
     # extract and normalize
     mos_values = [float(row[1]) for row in rows]
-    normalized = np.array(mos_values / 5.0, dtype=np.float32)
+    mos_values = np.array(mos_values, dtype=np.float32)
+
+    normalized = mos_values / 5.0
 
     return normalized
