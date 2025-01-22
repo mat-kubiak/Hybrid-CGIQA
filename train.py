@@ -23,8 +23,8 @@ HISTORY_PATH = f'{OUTPUT_DIR}/history.csv'
 STATUS_PATH = f'{OUTPUT_DIR}/status.ini'
 LOG_PATH = f'{OUTPUT_DIR}/log.txt'
 
-MAX_HEIGHT = 720
-MAX_WIDTH = 1280
+MAX_HEIGHT = 1440
+MAX_WIDTH = 2560
 RATINGS = 41 # range 1.0, 5.0 with step 0.1
 BATCH_SIZE = 5
 BATCHES = None
@@ -90,10 +90,6 @@ def initialize_model():
         log.logprint(LOG_PATH, f"Fatal Error: Could not load model file: {e}")
         sys.exit(1)
 
-def load_img(path, label):
-    image = images.load_img(path, MAX_HEIGHT, MAX_WIDTH)
-    return image, label
-
 class CustomBatchCallback(tf.keras.callbacks.Callback):
     def on_batch_end(self, batch, logs=None):
         global status, total_batches
@@ -131,14 +127,15 @@ def main():
     initialize_resources()
     initialize_model()
 
-    dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
-    dataset = dataset.map(load_img)
-    dataset = dataset.batch(BATCH_SIZE)
-    dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
+    train_dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
+    train_dataset = train_dataset.map(lambda path, label: (images.load_img(path, MAX_HEIGHT, MAX_WIDTH), label), num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    train_dataset = train_dataset.shuffle(buffer_size=1000)
+    train_dataset = train_dataset.batch(BATCH_SIZE)
+    train_dataset = train_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
     custom_callback = CustomBatchCallback()
 
-    history = model.fit(dataset, verbose=1, initial_epoch=status['epoch'], epochs=EPOCHS, callbacks=[custom_callback])
+    history = model.fit(train_dataset, verbose=1, initial_epoch=status['epoch'], epochs=EPOCHS, callbacks=[custom_callback])
     
     log.logprint(LOG_PATH, "Program completed")
 
