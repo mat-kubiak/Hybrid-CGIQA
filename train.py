@@ -28,24 +28,22 @@ BATCHES = None
 EPOCHS = 5
 
 tracker = None
-status = None
 mos = None
 model = None
 img_paths = None
 total_batches = 0
 
 def signal_handler(sig, frame):
-    global status
     tracker.logprint(f"Received signal {sig}")
     
     models.save_model(model, BACKUP_PATH)
 
-    tracker.logprint(f"Backup saved at batch {status['batch']}/{BATCHES} epoch {status['epoch']}/{EPOCHS}")
+    tracker.logprint(f"Backup saved at batch {tracker.batch}/{BATCHES} epoch {tracker.epoch}/{EPOCHS}")
     tracker.logprint(f"Exiting...")
     sys.exit(0)
 
 def initialize_resources():
-    global status, mos, img_paths, BATCHES
+    global mos, img_paths, BATCHES
 
     # load labels
     mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
@@ -68,7 +66,7 @@ def initialize_resources():
     # status
     if not tracker.status_exists():
         tracker.logprint("Created status file")
-        tracker.write_status({'epoch': 0, 'batch': 0})
+        tracker.write_status()
     
     status = tracker.read_status()
     tracker.logprint(f"Loaded status file: {status}")
@@ -90,32 +88,30 @@ def initialize_model():
 
 class CustomBatchCallback(tf.keras.callbacks.Callback):
     def on_batch_end(self, batch, logs=None):
-        global status, total_batches
+        global total_batches
 
-        status['batch'] = batch + 1
+        tracker.batch = batch + 1
         total_batches += 1
-        tracker.log(f"Completed batch {status['batch']}/{BATCHES} of epoch {status['epoch']}/{EPOCHS}")
+        tracker.log(f"Completed batch {tracker.batch}/{BATCHES} of epoch {tracker.epoch}/{EPOCHS}")
 
-        tracker.write_status(status)
+        tracker.write_status()
         tracker.append_csv_history(total_batches, logs['mean_absolute_error'], logs['loss'])
         
         tracker.log(f"Saved status and history")
 
     def on_epoch_end(self, epoch, logs=None):
-        global status
+        tracker.epoch = epoch + 1
+        tracker.batch = 0
 
-        status['epoch'] = epoch + 1
-        status['batch'] = 0
-
-        tracker.log(f"Completed epoch {status['epoch']}/{EPOCHS} completed")
+        tracker.log(f"Completed epoch {tracker.epoch}/{EPOCHS} completed")
         
-        tracker.write_status(status)
+        tracker.write_status()
         models.save_model(self.model, MODEL_PATH)
         
         tracker.log(f"Saved model")
 
 def main():
-    global status, model, tracker
+    global model, tracker
 
     tracker = Tracker(OUTPUT_DIR)
 
@@ -132,7 +128,7 @@ def main():
 
     custom_callback = CustomBatchCallback()
 
-    history = model.fit(train_dataset, verbose=1, initial_epoch=status['epoch'], epochs=EPOCHS, callbacks=[custom_callback])
+    history = model.fit(train_dataset, verbose=1, initial_epoch=tracker.epoch, epochs=EPOCHS, callbacks=[custom_callback])
     
     tracker.logprint("Program completed")
 

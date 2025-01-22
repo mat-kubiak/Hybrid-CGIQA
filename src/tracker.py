@@ -7,6 +7,9 @@ class Tracker:
         self.status_path = f'{output_dir}/status.ini'
         self.history_path = f'{output_dir}/history.csv'
 
+        self.batch = 0
+        self.epoch = 0
+
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
@@ -15,20 +18,18 @@ class Tracker:
 
     def read_status(self):
         config = configparser.ConfigParser()
-        
         config.read(self.status_path)
         
-        epoch = config.getint('progress', 'epoch', fallback=0)
-        batch = config.getint('progress', 'batch', fallback=0)
+        self.epoch = config.getint('progress', 'epoch', fallback=0)
+        self.batch = config.getint('progress', 'batch', fallback=0)
         
-        return {'epoch': epoch, 'batch': batch}
+        return {'epoch': self.epoch, 'batch': self.batch}
 
     def write_status(self, status):
         config = configparser.ConfigParser()
-        
         config['progress'] = {
-            'epoch': status['epoch'],
-            'batch': status['batch']
+            'epoch': self.epoch,
+            'batch': self.batch
         }
         
         with open(self.status_path, 'w') as configfile:
