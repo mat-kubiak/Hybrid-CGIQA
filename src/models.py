@@ -32,16 +32,6 @@ def init_model(max_height, max_width):
 
     return model
 
-def train_model(model, x_train, y_train, epochs, batch_size):
-    model.fit(
-        x=x_train,
-        y=y_train,
-        verbose=1,
-        epochs=epochs,
-        batch_size=batch_size,
-    )
-    return model
-
 def load_model(path):
     return keras.models.load_model(path)
 
