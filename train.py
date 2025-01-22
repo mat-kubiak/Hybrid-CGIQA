@@ -66,9 +66,9 @@ def initialize_resources():
     # status
     if not tracker.status_exists():
         tracker.logprint("Created status file")
-        tracker.write_status()
+        tracker.save_status()
     
-    status = tracker.read_status()
+    status = tracker.load_status()
     tracker.logprint(f"Loaded status file: {status}")
 
 def initialize_model():
@@ -94,7 +94,7 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
         total_batches += 1
         tracker.log(f"Completed batch {tracker.batch}/{BATCHES} of epoch {tracker.epoch}/{EPOCHS}")
 
-        tracker.write_status()
+        tracker.save_status()
         tracker.append_csv_history(total_batches, logs['mean_absolute_error'], logs['loss'])
         
         tracker.log(f"Saved status and history")
@@ -105,7 +105,7 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
 
         tracker.log(f"Completed epoch {tracker.epoch}/{EPOCHS} completed")
         
-        tracker.write_status()
+        tracker.save_status()
         models.save_model(self.model, MODEL_PATH)
         
         tracker.log(f"Saved model")

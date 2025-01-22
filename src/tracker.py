@@ -16,16 +16,16 @@ class Tracker:
     def status_exists(self):
         return os.path.exists(self.status_path)
 
-    def read_status(self):
+    def load_status(self):
         config = configparser.ConfigParser()
         config.read(self.status_path)
         
         self.epoch = config.getint('progress', 'epoch', fallback=0)
         self.batch = config.getint('progress', 'batch', fallback=0)
-        
+
         return {'epoch': self.epoch, 'batch': self.batch}
 
-    def write_status(self, status):
+    def save_status(self):
         config = configparser.ConfigParser()
         config['progress'] = {
             'epoch': self.epoch,
