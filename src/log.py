@@ -33,9 +33,9 @@ def logprint(path, message):
     print(message)
     log(path, message)
 
-def append_csv_history(path, batch, epoch, accuracy, loss):
+def append_csv_history(path, batch, accuracy, loss):
     isfile = os.path.isfile(path)
     with open(path, 'a') as file:
         if not isfile:
-            file.write(f"batch,epoch,accuracy,loss\n")
-        file.write(f"{batch},{epoch},{accuracy},{loss}\n")
+            file.write(f"batch,accuracy,loss\n")
+        file.write(f"{batch},{accuracy},{loss}\n")

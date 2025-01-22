@@ -34,6 +34,7 @@ status = None
 mos = None
 model = None
 img_paths = None
+total_batches = 0
 
 def signal_handler(sig, frame):
     global status
@@ -95,13 +96,14 @@ def load_img(path, label):
 
 class CustomBatchCallback(tf.keras.callbacks.Callback):
     def on_batch_end(self, batch, logs=None):
-        global status
+        global status, total_batches
 
         status['batch'] = batch + 1
+        total_batches += 1
         log.log(LOG_PATH, f"Completed batch {status['batch']}/{BATCHES} of epoch {status['epoch']}/{EPOCHS}")
 
         log.write_status(STATUS_PATH, status)
-        log.append_csv_history(HISTORY_PATH, status['batch'], status['epoch'], logs['accuracy'], logs['loss'])
+        log.append_csv_history(HISTORY_PATH, total_batches, logs['accuracy'], logs['loss'])
         
         log.log(LOG_PATH, f"Saved status and history")
 
