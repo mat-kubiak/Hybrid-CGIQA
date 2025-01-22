@@ -12,18 +12,21 @@ class Tracker:
 
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-
-    def status_exists(self):
-        return os.path.exists(self.status_path)
+        
+        if not os.path.isfile(self.status_path):
+            self.save_status()
+            self.logprint("Created status file")
+        else:
+            self.load_status()
+            obj = {'epoch': self.epoch, 'batch': self.batch}
+            self.logprint(f"Loaded status file: {obj}")
 
     def load_status(self):
         config = configparser.ConfigParser()
         config.read(self.status_path)
         
         self.epoch = config.getint('progress', 'epoch', fallback=0)
-        self.batch = config.getint('progress', 'batch', fallback=0)
-
-        return {'epoch': self.epoch, 'batch': self.batch}
+        self.batch = config.getint('progress', 'batch', fallback=0) 
 
     def save_status(self):
         config = configparser.ConfigParser()

@@ -63,14 +63,6 @@ def initialize_resources():
         tracker.logprint("Warning: number of images is not divisible by batch size")
     BATCHES = math.floor(len(img_paths)/BATCH_SIZE)
 
-    # status
-    if not tracker.status_exists():
-        tracker.logprint("Created status file")
-        tracker.save_status()
-    
-    status = tracker.load_status()
-    tracker.logprint(f"Loaded status file: {status}")
-
 def initialize_model():
     global model
 
