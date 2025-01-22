@@ -6,7 +6,8 @@ import tqdm
 project_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(f'{project_dir}/src')
 
-import images, labels, tracker, models
+import images, labels, models
+from tracker import Tracker
 
 # path to the database containing the images and mos.csv
 # change according to your needs
@@ -116,7 +117,7 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
 def main():
     global status, model, tracker
 
-    tracker = tracker.Tracker(OUTPUT_DIR)
+    tracker = Tracker(OUTPUT_DIR)
 
     tracker.logprint("Program starting up...")
     

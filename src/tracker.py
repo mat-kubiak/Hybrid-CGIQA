@@ -10,10 +10,10 @@ class Tracker:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-    def status_exists():
+    def status_exists(self):
         return os.path.exists(self.status_path)
 
-    def read_status():
+    def read_status(self):
         config = configparser.ConfigParser()
         
         config.read(self.status_path)
@@ -23,7 +23,7 @@ class Tracker:
         
         return {'epoch': epoch, 'batch': batch}
 
-    def write_status(status):
+    def write_status(self, status):
         config = configparser.ConfigParser()
         
         config['progress'] = {
@@ -34,16 +34,16 @@ class Tracker:
         with open(self.status_path, 'w') as configfile:
             config.write(configfile)
 
-    def log(message):
+    def log(self, message):
         with open(self.log_path, 'a') as file:
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             file.write(f"[{timestamp}] {message}\n")
 
-    def logprint(message):
+    def logprint(self, message):
         print(message)
         self.log(message)
 
-    def append_csv_history(batch, mse, loss):
+    def append_csv_history(self, batch, mse, loss):
         isfile = os.path.isfile(self.history_path)
         with open(self.history_path, 'a') as file:
             if not isfile:
