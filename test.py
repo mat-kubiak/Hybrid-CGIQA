@@ -11,7 +11,7 @@ import images, labels, models
 # Path to the database containing the images and mos.csv
 DATA_PATH = f'{project_dir}/data'
 
-MODEL_PATH = f'{project_dir}/model.keras'
+MODEL_PATH = f'{project_dir}/output/model.keras'
 MOS_PATH = f'{DATA_PATH}/mos.csv'
 IMG_DIRPATH = f'{DATA_PATH}/images/test'
 
