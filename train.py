@@ -25,7 +25,6 @@ LOG_PATH = f'{OUTPUT_DIR}/log.txt'
 
 MAX_HEIGHT = 1440
 MAX_WIDTH = 2560
-RATINGS = 41 # range 1.0, 5.0 with step 0.1
 BATCH_SIZE = 5
 BATCHES = None
 EPOCHS = 10
@@ -79,7 +78,7 @@ def initialize_model():
     global model
 
     if not models.model_exists(MODEL_PATH):
-        model = models.init_model(MAX_HEIGHT, MAX_WIDTH, RATINGS)
+        model = models.init_model(MAX_HEIGHT, MAX_WIDTH)
         log.logprint(LOG_PATH, f"Initialized new model with max image dims: {MAX_WIDTH}x{MAX_HEIGHT}")
         return
     

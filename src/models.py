@@ -4,26 +4,30 @@ from tensorflow import keras
 def model_exists(path):
     return os.path.isfile(path)
 
-def init_model(max_height, max_width, ratings):
+def init_model(max_height, max_width):
+
     model = keras.Sequential([
         keras.layers.Input(shape=(max_height, max_width, 3)),
-        keras.layers.Conv2D(128, kernel_size=(3, 3), activation="relu"),
-        keras.layers.Conv2D(128, kernel_size=(3, 3), activation="relu"),
+        keras.layers.Conv2D(32, kernel_size=(5, 5), activation="relu", padding="valid"),
         keras.layers.MaxPooling2D(pool_size=(2, 2)),
-        keras.layers.Conv2D(256, kernel_size=(3, 3), activation="relu"),
-        keras.layers.Conv2D(256, kernel_size=(3, 3), activation="relu"),
+        keras.layers.Conv2D(64, kernel_size=(5, 5), activation="relu", padding="valid"),
+        keras.layers.MaxPooling2D(pool_size=(2, 2)),
+        keras.layers.Conv2D(128, kernel_size=(5, 5), activation="relu", padding="valid"),
+        keras.layers.MaxPooling2D(pool_size=(2, 2)),
+        keras.layers.Conv2D(256, kernel_size=(5, 5), activation="relu", padding="valid"),
         keras.layers.GlobalAveragePooling2D(),
+        keras.layers.Flatten(),
         keras.layers.Dense(1024),
         keras.layers.Dense(1024),
         keras.layers.Dense(512),
         keras.layers.Dropout(0.5),
-        keras.layers.Dense(ratings, activation="softmax"),
+        keras.layers.Dense(1),
     ])
 
     model.compile(
-        optimizer=keras.optimizers.SGD(learning_rate=0.00001, momentum=0.9),
-        loss=keras.losses.CategoricalCrossentropy(),
-        metrics=["accuracy"]
+        optimizer=keras.optimizers.Adam(),
+        loss=keras.losses.MeanSquaredError(),
+        metrics=[keras.metrics.MeanAbsoluteError()]
     )
 
     return model
