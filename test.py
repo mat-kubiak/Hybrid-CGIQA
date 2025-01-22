@@ -28,13 +28,8 @@ def load_img(path, label):
 def main():
     global MAX_HEIGHT, MAX_WIDTH
     mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
-    print(f"Loaded {mos.shape[0]} labels")
-    if mos.shape[0] == 0:
-        print("Fatal error: no labels found")
-        sys.exit(1)
-
     image_paths = images.get_image_list(IMG_DIRPATH)
-    image_paths = IMG_DIRPATH + "/" + image_paths
+    print(f"Detected {mos.shape[0]} labels and {image_paths.shape[0]} images")
 
     if not models.model_exists(MODEL_PATH):
         print("Fatal error: no model found")
