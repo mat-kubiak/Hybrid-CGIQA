@@ -45,7 +45,7 @@ def initialize_resources():
 
     mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
     img_paths = images.get_image_list(IMG_DIRPATH)
-    tracker.logprint(f"Detected {len(mos)} labels and {len(image_paths)} images")
+    tracker.logprint(f"Detected {len(mos)} labels and {len(img_paths)} images")
 
     extra_batch_required = len(img_paths) % BATCH_SIZE != 0
     batches_per_epoch = math.floor(len(img_paths)/BATCH_SIZE) + extra_batch_required
@@ -98,6 +98,10 @@ def main():
     
     initialize_resources()
     model = initialize_model()
+
+    models.save_model(model, MODEL_PATH)
+
+    exit()
 
     dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
     dataset = dataset.map(load_img, num_parallel_calls=tf.data.experimental.AUTOTUNE)

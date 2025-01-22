@@ -31,6 +31,6 @@ def load_img(path, target_height, target_width):
 
     return image
 
-def get_image_list(path):
-    filenames = np.sort(np.array(os.listdir(path)))
-    return IMG_DIRPATH + "/" + filenames
+def get_image_list(dir_path):
+    filenames = np.sort(np.array(os.listdir(dir_path)))
+    return dir_path + "/" + filenames
