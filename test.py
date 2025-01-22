@@ -49,9 +49,9 @@ def main():
     dataset = dataset.batch(TEST_BATCH_SIZE)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-    loss, accuracy = model.evaluate(dataset)
+    loss, mse = model.evaluate(dataset)
     print(f"loss: {loss}")
-    print(f"accuracy: {accuracy}")
+    print(f"mse: {mse}")
 
     print("Program finished")
 
