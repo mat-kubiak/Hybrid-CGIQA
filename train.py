@@ -27,7 +27,7 @@ MAX_HEIGHT = 1440
 MAX_WIDTH = 2560
 BATCH_SIZE = 5
 BATCHES = None
-EPOCHS = 10
+EPOCHS = 5
 
 status = None
 mos = None
