@@ -116,7 +116,7 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
 def main():
     global status, model, tracker
 
-    tracker = Tracker(OUTPUT_DIR)
+    tracker = tracker.Tracker(OUTPUT_DIR)
 
     tracker.logprint("Program starting up...")
     
