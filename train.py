@@ -20,6 +20,8 @@ OUTPUT_DIR = f'{project_dir}/output/'
 MODEL_PATH = f'{OUTPUT_DIR}/model.keras'
 BACKUP_PATH = f'{OUTPUT_DIR}/backup.keras'
 HISTORY_PATH = f'{OUTPUT_DIR}/history.csv'
+STATUS_PATH = f'{OUTPUT_DIR}/status.ini'
+LOG_PATH = f'{OUTPUT_DIR}/log.txt'
 
 MAX_HEIGHT = 720
 MAX_WIDTH = 1280
@@ -35,12 +37,12 @@ img_paths = None
 
 def signal_handler(sig, frame):
     global status
-    log.logprint(f"Received signal {sig}")
+    log.logprint(LOG_PATH, f"Received signal {sig}")
     
     models.save_model(model, BACKUP_PATH)
 
-    log.logprint(f"Backup saved at batch {status['batch']}/{BATCHES} epoch {status['epoch']}/{EPOCHS}")
-    log.logprint(f"Exiting...")
+    log.logprint(LOG_PATH, f"Backup saved at batch {status['batch']}/{BATCHES} epoch {status['epoch']}/{EPOCHS}")
+    log.logprint(LOG_PATH, f"Exiting...")
     sys.exit(0)
 
 def initialize_resources():
@@ -48,43 +50,43 @@ def initialize_resources():
 
     # load labels
     mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
-    log.logprint(f"Loaded {mos.shape[0]} labels")
+    log.logprint(LOG_PATH, f"Loaded {mos.shape[0]} labels")
     
     if (mos.shape[0] == 0):
-        log.logprint("Fatal error: no labels found")
+        log.logprint(LOG_PATH, "Fatal error: no labels found")
         sys.exit(1)
 
     # image list
     img_paths = images.get_image_list(IMG_DIRPATH)
     img_paths = IMG_DIRPATH + "/" + img_paths
-    log.logprint(f"Found {len(img_paths)} images")
+    log.logprint(LOG_PATH, f"Found {len(img_paths)} images")
 
     # batches
     if len(img_paths) % BATCH_SIZE != 0:
-        log.logprint("Warning: number of images is not divisible by batch size")
+        log.logprint(LOG_PATH, "Warning: number of images is not divisible by batch size")
     BATCHES = math.floor(len(img_paths)/BATCH_SIZE)
 
     # status
-    if not log.status_exists():
-        log.logprint("Created status file")
-        log.write_status({'epoch': 0, 'batch': 0})
+    if not log.status_exists(STATUS_PATH):
+        log.logprint(LOG_PATH, "Created status file")
+        log.write_status(STATUS_PATH, {'epoch': 0, 'batch': 0})
     
-    status = log.read_status()
-    log.logprint(f"Loaded status file: {status}")
+    status = log.read_status(STATUS_PATH)
+    log.logprint(LOG_PATH, f"Loaded status file: {status}")
 
 def initialize_model():
     global model
 
     if not models.model_exists(MODEL_PATH):
         model = models.init_model(MAX_HEIGHT, MAX_WIDTH, RATINGS)
-        log.logprint(f"Initialized new model with max image dims: {MAX_WIDTH}x{MAX_HEIGHT}")
+        log.logprint(LOG_PATH, f"Initialized new model with max image dims: {MAX_WIDTH}x{MAX_HEIGHT}")
         return
     
     try:
         model = models.load_model(MODEL_PATH)
-        log.logprint(f"Loaded model from file")
+        log.logprint(LOG_PATH, f"Loaded model from file")
     except Exception as e:
-        log.logprint(f"Fatal Error: Could not load model file: {e}")
+        log.logprint(LOG_PATH, f"Fatal Error: Could not load model file: {e}")
         sys.exit(1)
 
 def load_img(path, label):
@@ -96,12 +98,12 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
         global status
 
         status['batch'] = batch + 1
-        log.log(f"Completed batch {status['batch']}/{BATCHES} of epoch {status['epoch']}/{EPOCHS}")
+        log.log(LOG_PATH, f"Completed batch {status['batch']}/{BATCHES} of epoch {status['epoch']}/{EPOCHS}")
 
-        log.write_status(status)
+        log.write_status(STATUS_PATH, status)
         log.append_csv_history(HISTORY_PATH, status['batch'], status['epoch'], logs['accuracy'], logs['loss'])
         
-        log.log(f"Saved status and history")
+        log.log(LOG_PATH, f"Saved status and history")
 
     def on_epoch_end(self, epoch, logs=None):
         global status
@@ -109,12 +111,12 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
         status['epoch'] = epoch + 1
         status['batch'] = 0
 
-        log.log(f"Completed epoch {status['epoch']}/{EPOCHS} completed")
+        log.log(LOG_PATH, f"Completed epoch {status['epoch']}/{EPOCHS} completed")
         
-        log.write_status(status)
+        log.write_status(STATUS_PATH, status)
         models.save_model(self.model, MODEL_PATH)
         
-        log.log(f"Saved model")
+        log.log(LOG_PATH, f"Saved model")
 
 def main():
     global status, model
@@ -122,7 +124,7 @@ def main():
     if not os.path.exists(OUTPUT_DIR):
         os.makedirs(OUTPUT_DIR)
 
-    log.logprint("Program starting up...")
+    log.logprint(LOG_PATH, "Program starting up...")
     
     initialize_resources()
     initialize_model()
@@ -136,7 +138,7 @@ def main():
 
     history = model.fit(dataset, verbose=1, initial_epoch=status['epoch'], epochs=EPOCHS, callbacks=[custom_callback])
     
-    log.logprint("Program completed")
+    log.logprint(LOG_PATH, "Program completed")
 
 if __name__ == '__main__':
     signal.signal(signal.SIGTERM, signal_handler)
