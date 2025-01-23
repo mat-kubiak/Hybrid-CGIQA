@@ -27,8 +27,9 @@ def load_img(path, label):
 def main():
     global MAX_HEIGHT, MAX_WIDTH
 
-    mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
-    img_paths = images.get_image_list(IMG_DIRPATH)
+    data = labels.load_data(MOS_PATH, IMG_DIRPATH)
+    img_paths = data[:,0].astype(str)
+    mos = data[:,1].astype(np.float32)
     print(f"Detected {len(mos)} labels and {len(img_paths)} images")
 
     if LIMIT < len(mos):
