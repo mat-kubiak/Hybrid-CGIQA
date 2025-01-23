@@ -52,12 +52,12 @@ def main():
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
     predictions = model.predict(dataset).flatten()
+    mse = (predictions - mos) ** 2
     
     for i in range(len(predictions)):
-        print(f"{predictions[i]:.2f} {mos[i]:.2f}")
+        print(f"{predictions[i]:.3f} {mos[i]:.3f} mse: {mse[i]:.2f}")
 
-    mse = np.mean((predictions - mos) ** 2)
-    print(f"mse: {mse}")
+    print(f"mse: {np.mean(mse)}")
 
     print("Program finished")
 
