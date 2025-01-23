@@ -18,6 +18,7 @@ MAX_HEIGHT = None
 MAX_WIDTH = None
 
 TEST_BATCH_SIZE = 5
+LIMIT = 50
 
 def load_img(path, label):
     image = images.load_img(path, MAX_HEIGHT, MAX_WIDTH)
@@ -29,6 +30,11 @@ def main():
     mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
     img_paths = images.get_image_list(IMG_DIRPATH)
     print(f"Detected {len(mos)} labels and {len(img_paths)} images")
+
+    if LIMIT < len(mos):
+        print(f"Limited images to {LIMIT}")
+        mos = mos[:LIMIT]
+        img_paths = img_paths[:LIMIT]
 
     if not models.model_exists(MODEL_PATH):
         print("Fatal error: no model found")
