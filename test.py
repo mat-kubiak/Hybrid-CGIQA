@@ -8,16 +8,14 @@ sys.path.append(f'{project_dir}/src')
 
 import images, labels, models
 
-# Path to the database containing the images and mos.csv
-DATA_PATH = f'{project_dir}/data'
-
 MODEL_PATH = f'{project_dir}/output/model.keras'
+
+DATA_PATH = f'{project_dir}/data'
 MOS_PATH = f'{DATA_PATH}/mos.csv'
 IMG_DIRPATH = f'{DATA_PATH}/images/test'
 
 MAX_HEIGHT = None
 MAX_WIDTH = None
-RATINGS = 41  # Range 1.0 to 5.0 with step 0.1 (41 distinct ratings)
 
 TEST_BATCH_SIZE = 5
 
@@ -27,25 +25,32 @@ def load_img(path, label):
 
 def main():
     global MAX_HEIGHT, MAX_WIDTH
+
     mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
-    image_paths = images.get_image_list(IMG_DIRPATH)
-    print(f"Detected {mos.shape[0]} labels and {image_paths.shape[0]} images")
+    img_paths = images.get_image_list(IMG_DIRPATH)
+    print(f"Detected {len(mos)} labels and {len(img_paths)} images")
 
     if not models.model_exists(MODEL_PATH):
         print("Fatal error: no model found")
         sys.exit(1)
+    
     model = models.load_model(MODEL_PATH)
-    MAX_HEIGHT = model.input_shape[1]
-    MAX_WIDTH = model.input_shape[2]
-    print(f"Found dimensions from model: width: {MAX_WIDTH}, height: {MAX_HEIGHT}")
+    print(f"Loaded model")
+    
+    MAX_HEIGHT, MAX_WIDTH = model.input_shape[1:3]
+    print(f"Found dimensions: width: {MAX_WIDTH}, height: {MAX_HEIGHT}")
 
-    dataset = tf.data.Dataset.from_tensor_slices((image_paths, mos))
+    dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
     dataset = dataset.map(load_img)
     dataset = dataset.batch(TEST_BATCH_SIZE)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-    loss, mse = model.evaluate(dataset)
-    print(f"loss: {loss}")
+    predictions = model.predict(dataset).flatten()
+    
+    for i in range(len(predictions)):
+        print(f"{predictions[i]:.2f} {mos[i]:.2f}")
+
+    mse = np.mean((predictions - mos) ** 2)
     print(f"mse: {mse}")
 
     print("Program finished")
