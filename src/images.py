@@ -15,6 +15,8 @@ def load_img(path, target_height, target_width):
 
     height, width = tf.shape(image)[0], tf.shape(image)[1]
 
+    image = augment_image(image)
+
     # the same
     if height == target_height and width == target_width:
         return image
@@ -26,9 +28,6 @@ def load_img(path, target_height, target_width):
 
     # bigger in 1 or 2 dims - resize and pad
     image = tf.image.resize_with_pad(image, target_height, target_width)
-
-    image = augment_image(image)
-
     return image
 
 def get_image_list(dir_path):
