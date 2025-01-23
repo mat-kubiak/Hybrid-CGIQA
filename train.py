@@ -43,8 +43,10 @@ def signal_handler(sig, frame):
 def initialize_resources():
     global mos, img_paths, batches_per_epoch
 
-    mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
-    img_paths = images.get_image_list(IMG_DIRPATH)
+    data = labels.load_data(MOS_PATH, IMG_DIRPATH)
+    img_paths = data[:,0].astype(str)
+    mos = data[:,1].astype(np.float32)
+
     tracker.logprint(f"Detected {len(mos)} labels and {len(img_paths)} images")
 
     extra_batch_required = len(img_paths) % BATCH_SIZE != 0
