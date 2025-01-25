@@ -1,28 +1,35 @@
 import os
 from tensorflow import keras
 
-def model_exists(path):
-    return os.path.isfile(path)
+class NormalizedHistogram(tf.keras.layers.Layer):
+    def __init__(self, nbins=256):
+        super().__init__()
+        self.nbins = nbins
+    
+    def call(self, inputs):
+        histograms = []
+        for c in range(3):
+            channel = inputs[..., c]
+
+            histogram = tf.histogram_fixed_width(channel, value_range=[0.0, 1.0], nbins=self.nbins, dtype=tf.float32)
+            histogram = histogram / tf.reduce_sum(histogram) # normalize
+            histograms.append(histogram)
+
+        histograms = tf.stack(histograms, axis=-1)
+    
+    def compute_output_shape(self):
+        return [self.nbins, 3]
 
 def init_model(max_height, max_width):
 
-    model = keras.Sequential([
-        keras.layers.Input(shape=(max_height, max_width, 3)),
-        keras.layers.Conv2D(32, kernel_size=(5, 5), activation="relu", padding="valid"),
-        keras.layers.MaxPooling2D(pool_size=(2, 2)),
-        keras.layers.Conv2D(64, kernel_size=(5, 5), activation="relu", padding="valid"),
-        keras.layers.MaxPooling2D(pool_size=(2, 2)),
-        keras.layers.Conv2D(128, kernel_size=(5, 5), activation="relu", padding="valid"),
-        keras.layers.MaxPooling2D(pool_size=(2, 2)),
-        keras.layers.Conv2D(256, kernel_size=(5, 5), activation="relu", padding="valid"),
-        keras.layers.GlobalAveragePooling2D(),
-        keras.layers.Flatten(),
-        keras.layers.Dense(1024),
-        keras.layers.Dense(1024),
-        keras.layers.Dense(512),
-        keras.layers.Dropout(0.5),
-        keras.layers.Dense(1),
-    ])
+    input_layer = tf.keras.layers.Input(shape=(None, None, 3))
+
+    x = NormalizedHistogram(nbins=256)(input_layer)
+    x = tf.keras.layers.Dense(units=128, activation='relu')(x)
+    
+    output_layer = tf.keras.layers.Dense(1, activation='linear')(x)
+
+    model = tf.keras.Model(inputs=input_layer, outputs=output_layer)
 
     model.compile(
         optimizer=keras.optimizers.Adam(),
