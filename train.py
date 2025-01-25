@@ -58,7 +58,7 @@ def initialize_model():
         tracker.logprint(f"Loaded model from file")
     
     except Exception as e:
-        model = models.init_model(MAX_HEIGHT, MAX_WIDTH)
+        model = models.init_model()
         tracker.logprint(f"Initialized new model")
     
     return model
@@ -88,7 +88,7 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
         tracker.log(f"Saved model")
 
 def load_img(path, label):
-    image = images.load_img(path, MAX_HEIGHT, MAX_WIDTH)
+    image = images.load_img(path)
     return image, label
 
 def main():

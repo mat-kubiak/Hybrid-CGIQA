@@ -20,7 +20,7 @@ class NormalizedHistogram(tf.keras.layers.Layer):
     def compute_output_shape(self):
         return [self.nbins, 3]
 
-def init_model(max_height, max_width):
+def init_model():
 
     input_layer = tf.keras.layers.Input(shape=(None, None, 3))
 
