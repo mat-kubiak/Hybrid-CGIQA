@@ -2,24 +2,33 @@ import os
 from tensorflow import keras
 import tensorflow as tf
 
+import tensorflow as tf
+
 class NormalizedHistogram(tf.keras.layers.Layer):
     def __init__(self, nbins=256):
         super().__init__()
         self.nbins = nbins
-    
+
     def call(self, inputs):
         histograms = []
+
         for c in range(3):
             channel = inputs[..., c]
 
-            histogram = tf.histogram_fixed_width(channel, value_range=[0.0, 1.0], nbins=self.nbins, dtype=tf.float32)
-            histogram = histogram / tf.reduce_sum(histogram) # normalize
-            histograms.append(histogram)
+            bins = tf.linspace(0.0, 1.0, self.nbins + 1)
+
+            hist = tf.histogram_fixed_width_bins(channel, value_range=[0.0, 1.0], nbins=self.nbins)
+            hist = tf.cast(hist, tf.float32)
+            hist = hist / tf.reduce_sum(hist)
+
+            histograms.append(hist)
 
         histograms = tf.stack(histograms, axis=-1)
-    
-    def compute_output_shape(self):
-        return [self.nbins, 3]
+        return histograms
+
+    def compute_output_shape(self, input_shape):
+        return input_shape[:-1] + (self.nbins, 3)
+
 
 def init_model():
 
