@@ -1,7 +1,6 @@
 import os, sys, time, signal, math
 import tensorflow as tf
 import numpy as np
-import tqdm
 
 project_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(f'{project_dir}/src')
