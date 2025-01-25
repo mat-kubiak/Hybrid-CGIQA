@@ -6,138 +6,112 @@ import tqdm
 project_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(f'{project_dir}/src')
 
-import images, labels, log, models
+import images, labels, models
+from tracker import Tracker
 
-# path to the database containing the images and mos.csv
-# change according to your needs
+# input
 DATA_PATH = f'{project_dir}/data'
-
 MOS_PATH = f'{DATA_PATH}/mos.csv'
 IMG_DIRPATH = f'{DATA_PATH}/images/train'
 
 # output
-OUTPUT_DIR = f'{project_dir}/output/'
+OUTPUT_DIR = f'{project_dir}/output'
 MODEL_PATH = f'{OUTPUT_DIR}/model.keras'
 BACKUP_PATH = f'{OUTPUT_DIR}/backup.keras'
-HISTORY_PATH = f'{OUTPUT_DIR}/history.csv'
-STATUS_PATH = f'{OUTPUT_DIR}/status.ini'
-LOG_PATH = f'{OUTPUT_DIR}/log.txt'
 
 MAX_HEIGHT = 1440
 MAX_WIDTH = 2560
-RATINGS = 41 # range 1.0, 5.0 with step 0.1
 BATCH_SIZE = 5
-BATCHES = None
-EPOCHS = 10
+EPOCHS = 5
 
-status = None
+tracker = None
 mos = None
 model = None
 img_paths = None
+batches_per_epoch = None
 total_batches = 0
 
 def signal_handler(sig, frame):
-    global status
-    log.logprint(LOG_PATH, f"Received signal {sig}")
+    tracker.logprint(f"Received signal {sig}")
     
     models.save_model(model, BACKUP_PATH)
 
-    log.logprint(LOG_PATH, f"Backup saved at batch {status['batch']}/{BATCHES} epoch {status['epoch']}/{EPOCHS}")
-    log.logprint(LOG_PATH, f"Exiting...")
+    tracker.logprint(f"Backup saved at batch {tracker.batch}/{batches_per_epoch} epoch {tracker.epoch}/{EPOCHS}")
+    tracker.logprint(f"Exiting...")
     sys.exit(0)
 
 def initialize_resources():
-    global status, mos, img_paths, BATCHES
+    global mos, img_paths, batches_per_epoch
 
-    # load labels
-    mos = labels.load_labels(MOS_PATH, IMG_DIRPATH)
-    log.logprint(LOG_PATH, f"Loaded {mos.shape[0]} labels")
-    
-    if (mos.shape[0] == 0):
-        log.logprint(LOG_PATH, "Fatal error: no labels found")
-        sys.exit(1)
+    data = labels.load_data(MOS_PATH, IMG_DIRPATH)
+    img_paths = data[:,0].astype(str)
+    mos = data[:,1].astype(np.float32)
 
-    # image list
-    img_paths = images.get_image_list(IMG_DIRPATH)
-    img_paths = IMG_DIRPATH + "/" + img_paths
-    log.logprint(LOG_PATH, f"Found {len(img_paths)} images")
+    tracker.logprint(f"Detected {len(mos)} labels and {len(img_paths)} images")
 
-    # batches
-    if len(img_paths) % BATCH_SIZE != 0:
-        log.logprint(LOG_PATH, "Warning: number of images is not divisible by batch size")
-    BATCHES = math.floor(len(img_paths)/BATCH_SIZE)
-
-    # status
-    if not log.status_exists(STATUS_PATH):
-        log.logprint(LOG_PATH, "Created status file")
-        log.write_status(STATUS_PATH, {'epoch': 0, 'batch': 0})
-    
-    status = log.read_status(STATUS_PATH)
-    log.logprint(LOG_PATH, f"Loaded status file: {status}")
+    extra_batch_required = len(img_paths) % BATCH_SIZE != 0
+    batches_per_epoch = math.floor(len(img_paths)/BATCH_SIZE) + extra_batch_required
 
 def initialize_model():
-    global model
-
-    if not models.model_exists(MODEL_PATH):
-        model = models.init_model(MAX_HEIGHT, MAX_WIDTH, RATINGS)
-        log.logprint(LOG_PATH, f"Initialized new model with max image dims: {MAX_WIDTH}x{MAX_HEIGHT}")
-        return
-    
     try:
         model = models.load_model(MODEL_PATH)
-        log.logprint(LOG_PATH, f"Loaded model from file")
+        tracker.logprint(f"Loaded model from file")
+    
     except Exception as e:
-        log.logprint(LOG_PATH, f"Fatal Error: Could not load model file: {e}")
-        sys.exit(1)
+        model = models.init_model(MAX_HEIGHT, MAX_WIDTH)
+        tracker.logprint(f"Initialized new model")
+    
+    return model
 
 class CustomBatchCallback(tf.keras.callbacks.Callback):
     def on_batch_end(self, batch, logs=None):
-        global status, total_batches
+        global total_batches
 
-        status['batch'] = batch + 1
+        tracker.batch = batch + 1
         total_batches += 1
-        log.log(LOG_PATH, f"Completed batch {status['batch']}/{BATCHES} of epoch {status['epoch']}/{EPOCHS}")
+        tracker.log(f"Completed batch {tracker.batch}/{batches_per_epoch} of epoch {tracker.epoch}/{EPOCHS}")
 
-        log.write_status(STATUS_PATH, status)
-        log.append_csv_history(HISTORY_PATH, total_batches, logs['accuracy'], logs['loss'])
+        tracker.save_status()
+        tracker.append_csv_history(total_batches, logs['mean_absolute_error'], logs['loss'])
         
-        log.log(LOG_PATH, f"Saved status and history")
+        tracker.log(f"Saved status and history")
 
     def on_epoch_end(self, epoch, logs=None):
-        global status
+        tracker.epoch = epoch + 1
+        tracker.batch = 0
 
-        status['epoch'] = epoch + 1
-        status['batch'] = 0
-
-        log.log(LOG_PATH, f"Completed epoch {status['epoch']}/{EPOCHS} completed")
+        tracker.log(f"Completed epoch {tracker.epoch}/{EPOCHS} completed")
         
-        log.write_status(STATUS_PATH, status)
+        tracker.save_status()
         models.save_model(self.model, MODEL_PATH)
         
-        log.log(LOG_PATH, f"Saved model")
+        tracker.log(f"Saved model")
+
+def load_img(path, label):
+    image = images.load_img(path, MAX_HEIGHT, MAX_WIDTH)
+    return image, label
 
 def main():
-    global status, model
+    global model, tracker
 
-    if not os.path.exists(OUTPUT_DIR):
-        os.makedirs(OUTPUT_DIR)
+    tracker = Tracker(OUTPUT_DIR)
 
-    log.logprint(LOG_PATH, "Program starting up...")
+    tracker.logprint("Program starting up...")
     
     initialize_resources()
-    initialize_model()
+    model = initialize_model()
 
-    train_dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
-    train_dataset = train_dataset.map(lambda path, label: (images.load_img(path, MAX_HEIGHT, MAX_WIDTH), label), num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    train_dataset = train_dataset.shuffle(buffer_size=1000)
-    train_dataset = train_dataset.batch(BATCH_SIZE)
-    train_dataset = train_dataset.prefetch(tf.data.experimental.AUTOTUNE)
+    dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
+    dataset = dataset.map(load_img, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    dataset = dataset.shuffle(buffer_size=1000)
+    dataset = dataset.batch(BATCH_SIZE)
+    dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
     custom_callback = CustomBatchCallback()
 
-    history = model.fit(train_dataset, verbose=1, initial_epoch=status['epoch'], epochs=EPOCHS, callbacks=[custom_callback])
+    history = model.fit(dataset, verbose=1, initial_epoch=tracker.epoch, epochs=EPOCHS, callbacks=[custom_callback])
     
-    log.logprint(LOG_PATH, "Program completed")
+    tracker.logprint("Program completed")
 
 if __name__ == '__main__':
     signal.signal(signal.SIGTERM, signal_handler)

@@ -1,26 +1,19 @@
 import csv, os
 import numpy as np
 
-def load_labels(mos_path, images_path):
+def load_data(mos_path, image_dir):
     with open(mos_path, "r") as csv_file:
         reader = csv.reader(csv_file)
         parsed_data = [row for row in reader]
 
-    header = parsed_data[0]
     rows = parsed_data[1:]
 
-    # pass only labels for images_path images
-    imgpaths = np.array(os.listdir(images_path))
-    rows = [row for row in rows if row[0] in imgpaths]
+    imgpaths = np.array(sorted(os.listdir(image_dir)))
+    filtered_rows = [row for row in rows if row[0] in imgpaths]
 
-    # extract
-    mos_values = [float(row[1]) for row in rows]
-    mos_values = np.array(mos_values, dtype=np.float32)
+    data = np.array([
+        [os.path.join(image_dir, row[0]), np.float32(row[1]) / 5.0]  # Normalize MOS to [0, 1]
+        for row in filtered_rows
+    ])
 
-    # normalize to (1-5) scale, round
-    normalized = np.round(mos_values * 0.8 + 1.0, 1)
-
-    # encode in matrix
-    one_hot_encoded = np.array([np.eye(41)[int((num - 1.0) * 10)] for num in normalized], dtype=np.float32)
-
-    return one_hot_encoded
+    return data
