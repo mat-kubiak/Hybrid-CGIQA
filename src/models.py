@@ -5,8 +5,8 @@ import tensorflow as tf
 import tensorflow as tf
 
 class NormalizedHistogram(tf.keras.layers.Layer):
-    def __init__(self, nbins=256):
-        super().__init__()
+    def __init__(self, nbins=256, **kwargs):
+        super().__init__(**kwargs)
         self.nbins = nbins
 
     def call(self, inputs):
@@ -28,7 +28,11 @@ class NormalizedHistogram(tf.keras.layers.Layer):
 
     def compute_output_shape(self, input_shape):
         return input_shape[:-1] + (self.nbins, 3)
-
+    
+    def get_config(self):
+        config = super().get_config()
+        config.update({"nbins": self.nbins, 'trainable': False})
+        return config
 
 def init_model():
 
