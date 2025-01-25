@@ -18,9 +18,9 @@ OUTPUT_DIR = f'{project_dir}/output'
 MODEL_PATH = f'{OUTPUT_DIR}/model.keras'
 BACKUP_PATH = f'{OUTPUT_DIR}/backup.keras'
 
-MAX_HEIGHT = 1440
-MAX_WIDTH = 2560
-BATCH_SIZE = 1
+HEIGHT = 512
+WIDTH = 512
+BATCH_SIZE = 5
 EPOCHS = 5
 
 tracker = None
@@ -57,7 +57,7 @@ def initialize_model():
         tracker.logprint(f"Loaded model from file")
     
     except Exception as e:
-        model = models.init_model()
+        model = models.init_model(HEIGHT, WIDTH)
         tracker.logprint(f"Initialized new model")
     
     return model
@@ -87,7 +87,7 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
         tracker.log(f"Saved model")
 
 def load_img(path, label):
-    image = images.load_img(path)
+    image = images.load_img(path, HEIGHT, WIDTH)
     return image, label
 
 def main():

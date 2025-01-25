@@ -14,14 +14,19 @@ DATA_PATH = f'{project_dir}/data'
 MOS_PATH = f'{DATA_PATH}/mos.csv'
 IMG_DIRPATH = f'{DATA_PATH}/images/train'
 
-TEST_BATCH_SIZE = 1
+HEIGHT = None
+WIDTH = None
+
+TEST_BATCH_SIZE = 5
 LIMIT = 50
 
 def load_img(path, label):
-    image = images.load_img(path)
+    image = images.load_img(path, HEIGHT, WIDTH)
     return image, label
 
 def main():
+    global HEIGHT, WIDTH
+
     data = labels.load_data(MOS_PATH, IMG_DIRPATH)
     img_paths = data[:,0].astype(str)
     mos = data[:,1].astype(np.float32)
@@ -38,6 +43,9 @@ def main():
 
     model = models.load_model(MODEL_PATH)
     print(f"Loaded model")
+
+    HEIGHT, WIDTH = model.input_shape[1:3]
+    print(f"Found dimensions: width: {WIDTH}, height: {HEIGHT}")
 
     dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
     dataset = dataset.map(load_img)

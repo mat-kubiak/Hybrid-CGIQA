@@ -34,9 +34,8 @@ class NormalizedHistogram(tf.keras.layers.Layer):
         config.update({"nbins": self.nbins, 'trainable': False})
         return config
 
-def init_model():
-
-    input_layer = tf.keras.layers.Input(shape=(None, None, 3))
+def init_model(height, width):
+    input_layer = tf.keras.layers.Input(shape=(height, width, 3))
 
     x = NormalizedHistogram(nbins=256)(input_layer)
     x = tf.keras.layers.Dense(units=128, activation='relu')(x)
