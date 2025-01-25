@@ -1,5 +1,6 @@
 import os
 from tensorflow import keras
+import tensorflow as tf
 
 class NormalizedHistogram(tf.keras.layers.Layer):
     def __init__(self, nbins=256):
