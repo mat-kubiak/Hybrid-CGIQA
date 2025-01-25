@@ -20,7 +20,7 @@ BACKUP_PATH = f'{OUTPUT_DIR}/backup.keras'
 
 MAX_HEIGHT = 1440
 MAX_WIDTH = 2560
-BATCH_SIZE = 5
+BATCH_SIZE = 1
 EPOCHS = 5
 
 tracker = None
