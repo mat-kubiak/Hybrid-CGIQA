@@ -104,6 +104,7 @@ def main():
     
     initialize_resources()
     model = initialize_model()
+    model.summary()
 
     dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
     dataset = dataset.map(load_img, num_parallel_calls=tf.data.experimental.AUTOTUNE)

@@ -1,8 +1,7 @@
 import os
+import tensorflow as tf
 from tensorflow import keras
-import tensorflow as tf
-
-import tensorflow as tf
+from tensorflow.keras import layers
 
 class NormalizedHistogram(tf.keras.layers.Layer):
     def __init__(self, nbins=256, **kwargs):
@@ -41,19 +40,19 @@ class NormalizedHistogram(tf.keras.layers.Layer):
 
 def _hidden_layers(input_layer):
     x = NormalizedHistogram(nbins=256)(input_layer)
-    x = tf.keras.layers.Flatten()(x)
-    x = tf.keras.layers.Dense(units=128, activation='relu')(x)
+    x = layers.Flatten()(x)
+    x = layers.Dense(units=128, activation='relu')(x)
     return x
 
 def init_model_categorical(height, width, ratings):
-    input_layer = tf.keras.layers.Input(shape=(height, width, 3))
+    input_layer = layers.Input(shape=(height, width, 3))
     hidden_layers = _hidden_layers(input_layer)
-    output_layer = tf.keras.layers.Dense(units=ratings, activation='softmax')(hidden_layers)
+    output_layer = layers.Dense(units=ratings, activation='softmax')(hidden_layers)
 
-    model = tf.keras.Model(inputs=input_layer, outputs=output_layer)
+    model = keras.Model(inputs=input_layer, outputs=output_layer)
 
     model.compile(
-        optimizer=keras.optimizers.Adam(0.001),
+        optimizer=keras.optimizers.Adam(),
         loss=keras.losses.SparseCategoricalCrossentropy(),
         metrics=["accuracy"]
     )
@@ -61,11 +60,11 @@ def init_model_categorical(height, width, ratings):
     return model
 
 def init_model_continuous(height, width):
-    input_layer = tf.keras.layers.Input(shape=(height, width, 3))
+    input_layer = layers.Input(shape=(height, width, 3))
     hidden_layers = _hidden_layers(input_layer)
-    output_layer = tf.keras.layers.Dense(units=1, activation='linear')(hidden_layers)
+    output_layer = layers.Dense(units=1, activation='linear')(hidden_layers)
 
-    model = tf.keras.Model(inputs=input_layer, outputs=output_layer)
+    model = keras.Model(inputs=input_layer, outputs=output_layer)
 
     model.compile(
         optimizer=keras.optimizers.Adam(),
