@@ -23,6 +23,7 @@ WIDTH = 512
 BATCH_SIZE = 5
 EPOCHS = 5
 LIMIT = None # change to a number to limit training to n first sampless
+RATINGS = 41
 
 tracker = None
 mos = None
@@ -43,10 +44,8 @@ def signal_handler(sig, frame):
 def initialize_resources():
     global mos, img_paths, batches_per_epoch
 
-    data = labels.load_data(MOS_PATH, IMG_DIRPATH)
-    img_paths = data[:,0].astype(str)
-    mos = data[:,1].astype(np.float32)
-
+    img_paths = images.get_image_list(IMG_DIRPATH)
+    mos = labels.load_categorical(MOS_PATH, IMG_DIRPATH)
     tracker.logprint(f"Detected {len(mos)} labels and {len(img_paths)} images")
 
     if LIMIT != None:
@@ -63,7 +62,7 @@ def initialize_model():
         tracker.logprint(f"Loaded model from file")
     
     except Exception as e:
-        model = models.init_model(HEIGHT, WIDTH)
+        model = models.init_model_categorical(HEIGHT, WIDTH, RATINGS)
         tracker.logprint(f"Initialized new model")
     
     return model
@@ -77,7 +76,7 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
         tracker.log(f"Completed batch {tracker.batch}/{batches_per_epoch} of epoch {tracker.epoch}/{EPOCHS}")
 
         tracker.save_status()
-        tracker.append_csv_history(total_batches, logs['mean_absolute_error'], logs['loss'])
+        tracker.append_csv_history(total_batches, logs['accuracy'], logs['loss'])
         
         tracker.log(f"Saved status and history")
 

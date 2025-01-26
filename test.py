@@ -27,9 +27,8 @@ def load_img(path, label):
 def main():
     global HEIGHT, WIDTH
 
-    data = labels.load_data(MOS_PATH, IMG_DIRPATH)
-    img_paths = data[:,0].astype(str)
-    mos = data[:,1].astype(np.float32)
+    img_paths = images.get_image_list(IMG_DIRPATH)
+    mos = labels.load_categorical(MOS_PATH, IMG_DIRPATH)
     print(f"Detected {len(mos)} labels and {len(img_paths)} images")
 
     if LIMIT < len(mos):
@@ -52,14 +51,9 @@ def main():
     dataset = dataset.batch(TEST_BATCH_SIZE)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-    predictions = model.predict(dataset).flatten()
-    mse = (predictions - mos) ** 2
-    
-    for i in range(len(predictions)):
-        print(f"{predictions[i]:.3f} {mos[i]:.3f} mse: {mse[i]:.2f}")
-
-    print(f"mse: {np.mean(mse)}")
-
+    loss, accuracy = model.evaluate(dataset)
+    print(f"loss: {loss}")
+    print(f"accuracy: {accuracy}")
     print("Program finished")
 
 if __name__ == '__main__':
