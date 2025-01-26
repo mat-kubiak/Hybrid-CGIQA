@@ -22,6 +22,7 @@ HEIGHT = 512
 WIDTH = 512
 BATCH_SIZE = 5
 EPOCHS = 5
+LIMIT = None # change to a number to limit training to n first sampless
 
 tracker = None
 mos = None
@@ -47,6 +48,11 @@ def initialize_resources():
     mos = data[:,1].astype(np.float32)
 
     tracker.logprint(f"Detected {len(mos)} labels and {len(img_paths)} images")
+
+    if LIMIT != None:
+        img_paths = img_paths[:LIMIT]
+        mos = mos[:LIMIT]
+        tracker.logprint(f"Limiting data to {LIMIT} first samples")
 
     extra_batch_required = len(img_paths) % BATCH_SIZE != 0
     batches_per_epoch = math.floor(len(img_paths)/BATCH_SIZE) + extra_batch_required
