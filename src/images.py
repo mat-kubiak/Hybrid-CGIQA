@@ -7,7 +7,7 @@ def load_img(path, height, width):
     image = tf.image.decode_jpeg(image, channels=3)
     image = tf.cast(image, tf.float32) / 255.0
     
-    image = tf.image.resize_with_pad( image, height, width, method=ResizeMethod.BILINEAR, antialias=False)
+    image = tf.image.resize_with_pad( image, height, width, method=tf.ResizeMethod.BILINEAR, antialias=False)
     
     return image
 
