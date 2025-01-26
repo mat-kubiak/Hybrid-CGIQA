@@ -1,19 +1,29 @@
 import csv, os
 import numpy as np
 
-def load_data(mos_path, image_dir):
+def _load_data(mos_path, image_dir):
     with open(mos_path, "r") as csv_file:
         reader = csv.reader(csv_file)
         parsed_data = [row for row in reader]
-
     rows = parsed_data[1:]
 
-    imgpaths = np.array(sorted(os.listdir(image_dir)))
-    filtered_rows = [row for row in rows if row[0] in imgpaths]
+    imgpaths = sorted(os.listdir(image_dir))
+    filtered_rows = np.array([row for row in rows if row[0] in imgpaths])
 
-    data = np.array([
-        [os.path.join(image_dir, row[0]), np.float32(row[1]) / 5.0]  # Normalize MOS to [0, 1]
-        for row in filtered_rows
-    ])
+    mos = filtered_rows[:, 1]
+    return mos.astype(np.float32)
 
-    return data
+def load_categorical(mos_path, image_dir):
+    mos = _load_data(mos_path, image_dir)
+    rescaled = np.round(mos / 5.0 * 4.0 + 1, 1)
+
+    cats = np.arange(1.0, 5.1, 0.1)
+    ordinal_encoded = np.searchsorted(cats, rescaled)
+
+    return ordinal_encoded
+
+def load_continuous(mos_path, image_dir):
+    mos = _load_data(mos_path, image_dir)
+
+    normalized = mos / 5.0
+    return normalized
