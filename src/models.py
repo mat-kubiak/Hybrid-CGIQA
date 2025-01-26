@@ -31,7 +31,7 @@ class NormalizedHistogram(tf.keras.layers.Layer):
     def compute_output_shape(self, input_shape):
         # input: (None, h, w, 3)
         # output: (None, 256, 3)
-        return (input_shape[0], self.nbins, 3)
+        return (None, self.nbins, 3)
     
     def get_config(self):
         config = super().get_config()
@@ -39,9 +39,22 @@ class NormalizedHistogram(tf.keras.layers.Layer):
         return config
 
 def _hidden_layers(input_layer):
-    x = NormalizedHistogram(nbins=256)(input_layer)
-    x = layers.Flatten()(x)
+    
+    # histogram path
+    h = NormalizedHistogram(nbins=256)(input_layer)
+    h = layers.Flatten()(h)
+
+    # convolution path
+    c = layers.Conv2D(filters=32, kernel_size=(7,7))(input_layer)
+    c = layers.MaxPooling2D(pool_size=(3,3))(c)
+    c = layers.Conv2D(filters=64, kernel_size=(7,7))(c)
+    c = layers.GlobalMaxPooling2D()(c)
+
+    # final path
+    x = layers.Concatenate()([h, c])
     x = layers.Dense(units=128, activation='relu')(x)
+    x = layers.Dense(units=128, activation='relu')(x)
+    x = layers.Dropout(0.5)(x)
     return x
 
 def init_model_categorical(height, width, ratings):
