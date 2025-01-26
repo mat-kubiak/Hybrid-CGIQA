@@ -39,14 +39,31 @@ class NormalizedHistogram(tf.keras.layers.Layer):
         config.update({"nbins": self.nbins, 'trainable': False})
         return config
 
-def init_model(height, width):
-    input_layer = tf.keras.layers.Input(shape=(height, width, 3))
-
+def _hidden_layers(input_layer):
     x = NormalizedHistogram(nbins=256)(input_layer)
     x = tf.keras.layers.Flatten()(x)
     x = tf.keras.layers.Dense(units=128, activation='relu')(x)
+    return x
 
-    output_layer = tf.keras.layers.Dense(1, activation='linear')(x)
+def init_model_categorical(height, width, ratings):
+    input_layer = tf.keras.layers.Input(shape=(height, width, 3))
+    hidden_layers = _hidden_layers(input_layer)
+    output_layer = tf.keras.layers.Dense(units=ratings, activation='softmax')(hidden_layers)
+
+    model = tf.keras.Model(inputs=input_layer, outputs=output_layer)
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(0.001),
+        loss=keras.losses.SparseCategoricalCrossentropy(),
+        metrics=["accuracy"]
+    )
+
+    return model
+
+def init_model_continuous(height, width):
+    input_layer = tf.keras.layers.Input(shape=(height, width, 3))
+    hidden_layers = _hidden_layers(input_layer)
+    output_layer = tf.keras.layers.Dense(units=1, activation='linear')(hidden_layers)
 
     model = tf.keras.Model(inputs=input_layer, outputs=output_layer)
 
