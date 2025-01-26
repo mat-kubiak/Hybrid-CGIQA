@@ -1,7 +1,6 @@
 import os, sys, time, signal, math
 import tensorflow as tf
 import numpy as np
-import tqdm
 
 project_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(f'{project_dir}/src')
@@ -19,10 +18,11 @@ OUTPUT_DIR = f'{project_dir}/output'
 MODEL_PATH = f'{OUTPUT_DIR}/model.keras'
 BACKUP_PATH = f'{OUTPUT_DIR}/backup.keras'
 
-MAX_HEIGHT = 1440
-MAX_WIDTH = 2560
+HEIGHT = 512
+WIDTH = 512
 BATCH_SIZE = 5
 EPOCHS = 5
+LIMIT = None # change to a number to limit training to n first sampless
 
 tracker = None
 mos = None
@@ -49,6 +49,11 @@ def initialize_resources():
 
     tracker.logprint(f"Detected {len(mos)} labels and {len(img_paths)} images")
 
+    if LIMIT != None:
+        img_paths = img_paths[:LIMIT]
+        mos = mos[:LIMIT]
+        tracker.logprint(f"Limiting data to {LIMIT} first samples")
+
     extra_batch_required = len(img_paths) % BATCH_SIZE != 0
     batches_per_epoch = math.floor(len(img_paths)/BATCH_SIZE) + extra_batch_required
 
@@ -58,7 +63,7 @@ def initialize_model():
         tracker.logprint(f"Loaded model from file")
     
     except Exception as e:
-        model = models.init_model(MAX_HEIGHT, MAX_WIDTH)
+        model = models.init_model(HEIGHT, WIDTH)
         tracker.logprint(f"Initialized new model")
     
     return model
@@ -88,7 +93,7 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
         tracker.log(f"Saved model")
 
 def load_img(path, label):
-    image = images.load_img(path, MAX_HEIGHT, MAX_WIDTH)
+    image = images.load_img(path, HEIGHT, WIDTH)
     return image, label
 
 def main():

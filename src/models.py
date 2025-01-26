@@ -1,28 +1,54 @@
 import os
 from tensorflow import keras
+import tensorflow as tf
 
-def model_exists(path):
-    return os.path.isfile(path)
+import tensorflow as tf
 
-def init_model(max_height, max_width):
+class NormalizedHistogram(tf.keras.layers.Layer):
+    def __init__(self, nbins=256, **kwargs):
+        super().__init__(**kwargs)
+        self.nbins = nbins
 
-    model = keras.Sequential([
-        keras.layers.Input(shape=(max_height, max_width, 3)),
-        keras.layers.Conv2D(32, kernel_size=(5, 5), activation="relu", padding="valid"),
-        keras.layers.MaxPooling2D(pool_size=(2, 2)),
-        keras.layers.Conv2D(64, kernel_size=(5, 5), activation="relu", padding="valid"),
-        keras.layers.MaxPooling2D(pool_size=(2, 2)),
-        keras.layers.Conv2D(128, kernel_size=(5, 5), activation="relu", padding="valid"),
-        keras.layers.MaxPooling2D(pool_size=(2, 2)),
-        keras.layers.Conv2D(256, kernel_size=(5, 5), activation="relu", padding="valid"),
-        keras.layers.GlobalAveragePooling2D(),
-        keras.layers.Flatten(),
-        keras.layers.Dense(1024),
-        keras.layers.Dense(1024),
-        keras.layers.Dense(512),
-        keras.layers.Dropout(0.5),
-        keras.layers.Dense(1),
-    ])
+    def call(self, inputs):
+        
+        def op_per_image(image):
+            histograms = []
+            for c in range(3):
+                channel = image[..., c]
+                channel = tf.reshape(channel, [-1])
+
+                hist = tf.histogram_fixed_width(channel, value_range=[0.0, 1.0], nbins=self.nbins)
+                hist = tf.cast(hist, tf.float32)
+                hist = hist / tf.reduce_sum(hist)
+
+                histograms.append(hist)
+
+            histograms = tf.stack(histograms, axis=-1)
+            return histograms
+        
+        histograms = tf.map_fn(op_per_image, inputs)
+        return histograms
+
+    def compute_output_shape(self, input_shape):
+        # input: (None, h, w, 3)
+        # output: (None, 256, 3)
+        return (input_shape[0], self.nbins, 3)
+    
+    def get_config(self):
+        config = super().get_config()
+        config.update({"nbins": self.nbins, 'trainable': False})
+        return config
+
+def init_model(height, width):
+    input_layer = tf.keras.layers.Input(shape=(height, width, 3))
+
+    x = NormalizedHistogram(nbins=256)(input_layer)
+    x = tf.keras.layers.Flatten()(x)
+    x = tf.keras.layers.Dense(units=128, activation='relu')(x)
+
+    output_layer = tf.keras.layers.Dense(1, activation='linear')(x)
+
+    model = tf.keras.Model(inputs=input_layer, outputs=output_layer)
 
     model.compile(
         optimizer=keras.optimizers.Adam(),

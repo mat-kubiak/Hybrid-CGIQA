@@ -12,20 +12,20 @@ MODEL_PATH = f'{project_dir}/output/model.keras'
 
 DATA_PATH = f'{project_dir}/data'
 MOS_PATH = f'{DATA_PATH}/mos.csv'
-IMG_DIRPATH = f'{DATA_PATH}/images/test'
+IMG_DIRPATH = f'{DATA_PATH}/images/train'
 
-MAX_HEIGHT = None
-MAX_WIDTH = None
+HEIGHT = None
+WIDTH = None
 
 TEST_BATCH_SIZE = 5
 LIMIT = 50
 
 def load_img(path, label):
-    image = images.load_img(path, MAX_HEIGHT, MAX_WIDTH)
+    image = images.load_img(path, HEIGHT, WIDTH)
     return image, label
 
 def main():
-    global MAX_HEIGHT, MAX_WIDTH
+    global HEIGHT, WIDTH
 
     data = labels.load_data(MOS_PATH, IMG_DIRPATH)
     img_paths = data[:,0].astype(str)
@@ -36,16 +36,16 @@ def main():
         print(f"Limited images to {LIMIT}")
         mos = mos[:LIMIT]
         img_paths = img_paths[:LIMIT]
-
-    if not models.model_exists(MODEL_PATH):
-        print("Fatal error: no model found")
-        sys.exit(1)
     
+    if not os.path.isfile(MODEL_PATH):
+        print("Fatal error: model could not be found")
+        sys.exit(1)
+
     model = models.load_model(MODEL_PATH)
     print(f"Loaded model")
-    
-    MAX_HEIGHT, MAX_WIDTH = model.input_shape[1:3]
-    print(f"Found dimensions: width: {MAX_WIDTH}, height: {MAX_HEIGHT}")
+
+    HEIGHT, WIDTH = model.input_shape[1:3]
+    print(f"Found dimensions: width: {WIDTH}, height: {HEIGHT}")
 
     dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
     dataset = dataset.map(load_img)
