@@ -10,24 +10,29 @@ class NormalizedHistogram(tf.keras.layers.Layer):
         self.nbins = nbins
 
     def call(self, inputs):
-        histograms = []
+        
+        def op_per_image(image):
+            histograms = []
+            for c in range(3):
+                channel = image[..., c]
+                channel = tf.reshape(channel, [-1])
 
-        for c in range(3):
-            channel = inputs[..., c]
+                hist = tf.histogram_fixed_width(channel, value_range=[0.0, 1.0], nbins=self.nbins)
+                hist = tf.cast(hist, tf.float32)
+                hist = hist / tf.reduce_sum(hist)
 
-            bins = tf.linspace(0.0, 1.0, self.nbins + 1)
+                histograms.append(hist)
 
-            hist = tf.histogram_fixed_width_bins(channel, value_range=[0.0, 1.0], nbins=self.nbins)
-            hist = tf.cast(hist, tf.float32)
-            hist = hist / tf.reduce_sum(hist)
-
-            histograms.append(hist)
-
-        histograms = tf.stack(histograms, axis=-1)
+            histograms = tf.stack(histograms, axis=-1)
+            return histograms
+        
+        histograms = tf.map_fn(op_per_image, inputs)
         return histograms
 
     def compute_output_shape(self, input_shape):
-        return input_shape[:-1] + (self.nbins, 3)
+        # input: (None, h, w, 3)
+        # output: (None, 256, 3)
+        return (input_shape[0], self.nbins, 3)
     
     def get_config(self):
         config = super().get_config()
@@ -38,8 +43,9 @@ def init_model(height, width):
     input_layer = tf.keras.layers.Input(shape=(height, width, 3))
 
     x = NormalizedHistogram(nbins=256)(input_layer)
+    x = tf.keras.layers.Flatten()(x)
     x = tf.keras.layers.Dense(units=128, activation='relu')(x)
-    
+
     output_layer = tf.keras.layers.Dense(1, activation='linear')(x)
 
     model = tf.keras.Model(inputs=input_layer, outputs=output_layer)
