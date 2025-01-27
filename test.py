@@ -17,8 +17,8 @@ IMG_DIRPATH = f'{DATA_PATH}/images/train'
 HEIGHT = None
 WIDTH = None
 
-TEST_BATCH_SIZE = 5
-LIMIT = 50
+TEST_BATCH_SIZE = 1
+LIMIT = 20
 
 def load_img(path, label):
     image = images.load_img(path, HEIGHT, WIDTH)
@@ -28,7 +28,7 @@ def main():
     global HEIGHT, WIDTH
 
     img_paths = images.get_image_list(IMG_DIRPATH)
-    mos = labels.load_categorical(MOS_PATH, IMG_DIRPATH)
+    mos = labels.load_continuous(MOS_PATH, IMG_DIRPATH)
     print(f"Detected {len(mos)} labels and {len(img_paths)} images")
 
     if LIMIT < len(mos):
@@ -51,10 +51,13 @@ def main():
     dataset = dataset.batch(TEST_BATCH_SIZE)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-    loss, accuracy = model.evaluate(dataset)
-    print(f"loss: {loss}")
-    print(f"accuracy: {accuracy}")
-    print("Program finished")
+    predictions = model.predict(dataset).flatten()
+    mae = np.abs(predictions - mos)
+
+    for i in range(len(predictions)):
+        print(f"{predictions[i]*100:.1f} {mos[i]*100:.1f} {mae[i]:.2f}")
+    
+    print(f"mae: {np.mean(mae)}")
 
 if __name__ == '__main__':
     main()
