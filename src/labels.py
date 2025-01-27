@@ -20,7 +20,9 @@ def load_categorical(mos_path, image_dir):
     cats = np.arange(1.0, 5.1, 0.1)
     ordinal_encoded = np.searchsorted(cats, rescaled)
 
-    return ordinal_encoded
+    one_hot = np.eye(len(cats))[ordinal_encoded]
+
+    return one_hot
 
 def load_continuous(mos_path, image_dir):
     mos = _load_data(mos_path, image_dir)

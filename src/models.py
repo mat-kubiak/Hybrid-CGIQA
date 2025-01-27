@@ -4,7 +4,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from histogram import NormalizedHistogram
 from attention import SpatialAttention
-import ordinalcrossentropy as OCC
+from ordinalcrossentropy import OrdinalCrossentropy
 
 def _hidden_layers(input_layer):
     
@@ -36,7 +36,7 @@ def init_model_categorical(height, width, ratings):
     model.compile(
         optimizer=keras.optimizers.Adam(),
         # loss=keras.losses.SparseCategoricalCrossentropy(),
-        loss=OCC.loss,
+        loss=OrdinalCrossentropy(),
         metrics=["accuracy"]
     )
 
