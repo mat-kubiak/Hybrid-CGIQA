@@ -6,6 +6,19 @@ from histogram import NormalizedHistogram
 from attention import SpatialAttention
 from ordinalcrossentropy import OrdinalCrossentropy
 
+def _squeeze_excite(input_layer, reduction_ratio=6):
+    squeeze = layers.GlobalAveragePooling2D()(input_layer)
+
+    reduced_channels = squeeze.shape[-1]
+
+    x = layers.Dense(reduced_channels // reduction_ratio, activation="relu")(squeeze)
+    x = layers.Dense(reduced_channels, activation="sigmoid")(x)
+    
+    x = layers.Reshape((1, 1, reduced_channels))(x)
+    x = layers.Multiply()([input_layer, x])
+
+    return x
+
 def _hidden_layers(input_layer):
     x = NormalizedHistogram(nbins=256)(input_layer)
     x = layers.Flatten()(x)
