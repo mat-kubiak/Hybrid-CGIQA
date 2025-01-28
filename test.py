@@ -16,6 +16,7 @@ IMG_DIRPATH = f'{DATA_PATH}/images/train'
 
 HEIGHT = None
 WIDTH = None
+CATEGORICAL = None
 
 TEST_BATCH_SIZE = 1
 LIMIT = 20
@@ -27,8 +28,19 @@ def load_image(path, label):
 def main():
     global HEIGHT, WIDTH
 
+    model = models.load_model(MODEL_PATH)
+    print(f"Loaded model")
+
+    HEIGHT, WIDTH = model.input_shape[1:3]
+    print(f"Found dimensions: width: {WIDTH}, height: {HEIGHT}")
+    CATEGORICAL = model.output_shape[-1] == 41
+    print(f"Detected model is categorical: {CATEGORICAL}")
+
     img_paths = images.get_image_list(IMG_DIRPATH)
-    mos = labels.load_continuous(MOS_PATH, IMG_DIRPATH)
+    if CATEGORICAL:
+        mos = labels.load_categorical(MOS_PATH, IMG_DIRPATH)
+    else:
+        mos = labels.load_continuous(MOS_PATH, IMG_DIRPATH)
     print(f"Detected {len(mos)} labels and {len(img_paths)} images")
 
     if LIMIT < len(mos):
@@ -39,12 +51,6 @@ def main():
     if not os.path.isfile(MODEL_PATH):
         print("Fatal error: model could not be found")
         sys.exit(1)
-
-    model = models.load_model(MODEL_PATH)
-    print(f"Loaded model")
-
-    HEIGHT, WIDTH = model.input_shape[1:3]
-    print(f"Found dimensions: width: {WIDTH}, height: {HEIGHT}")
 
     dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
     dataset = dataset.map(load_image)
