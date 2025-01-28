@@ -33,8 +33,9 @@ class NormalizedHistogram(tf.keras.layers.Layer):
                 channel = image[..., c]
                 channel = tf.reshape(channel, [-1])
 
-                hist = _compute_histogram(channel, value_range=[0.0, 1.0], nbins=self.nbins)
+                hist = _compute_histogram(channel, value_range=[0.0, 1.0], nbins=self.nbins+1)
                 hist = tf.cast(hist, tf.float32)
+                hist = hist[1:] # remove first bin to remove impact of zero-padding
                 hist = hist / tf.reduce_sum(hist)
 
                 histograms.append(hist)
