@@ -24,6 +24,7 @@ BATCH_SIZE = 5
 EPOCHS = 5
 LIMIT = None # change to a number to limit training to n first sampless
 AUGMENT = False
+CATEGORICAL = False
 
 tracker = None
 mos = None
@@ -45,7 +46,11 @@ def initialize_resources():
     global mos, img_paths, batches_per_epoch
 
     img_paths = images.get_image_list(IMG_DIRPATH)
-    mos = labels.load_continuous(MOS_PATH, IMG_DIRPATH)
+
+    if CATEGORICAL:
+        mos = labels.load_categorical(MOS_PATH, IMG_DIRPATH, 41)
+    else:
+        mos = labels.load_continuous(MOS_PATH, IMG_DIRPATH)
     tracker.logprint(f"Detected {len(mos)} labels and {len(img_paths)} images")
 
     if LIMIT != None:
@@ -62,7 +67,10 @@ def initialize_model():
         tracker.logprint(f"Loaded model from file")
     
     except Exception as e:
-        model = models.init_model_continuous(HEIGHT, WIDTH)
+        if CATEGORICAL:
+            model = models.init_model_categorical(HEIGHT, WIDTH, 41)
+        else:
+            model = models.init_model_continuous(HEIGHT, WIDTH)
         tracker.logprint(f"Initialized new model")
     
     return model
