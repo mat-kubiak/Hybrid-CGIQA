@@ -23,6 +23,7 @@ WIDTH = 512
 BATCH_SIZE = 5
 EPOCHS = 5
 LIMIT = None # change to a number to limit training to n first sampless
+AUGMENT = False
 
 tracker = None
 mos = None
@@ -90,8 +91,8 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
         
         tracker.log(f"Saved model")
 
-def load_img(path, label):
-    image = images.load_img(path, HEIGHT, WIDTH)
+def load_image(path, label):
+    image = images.load_image(path, HEIGHT, WIDTH, AUGMENT)
     return image, label
 
 def main():
@@ -106,7 +107,7 @@ def main():
     model.summary()
 
     dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
-    dataset = dataset.map(load_img, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    dataset = dataset.map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     dataset = dataset.shuffle(buffer_size=1000)
     dataset = dataset.batch(BATCH_SIZE)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)

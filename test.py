@@ -20,8 +20,8 @@ WIDTH = None
 TEST_BATCH_SIZE = 1
 LIMIT = 20
 
-def load_img(path, label):
-    image = images.load_img(path, HEIGHT, WIDTH)
+def load_image(path, label):
+    image = images.load_image(path, HEIGHT, WIDTH, False)
     return image, label
 
 def main():
@@ -47,7 +47,7 @@ def main():
     print(f"Found dimensions: width: {WIDTH}, height: {HEIGHT}")
 
     dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
-    dataset = dataset.map(load_img)
+    dataset = dataset.map(load_image)
     dataset = dataset.batch(TEST_BATCH_SIZE)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
