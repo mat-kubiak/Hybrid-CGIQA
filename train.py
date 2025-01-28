@@ -84,7 +84,7 @@ class CustomBatchCallback(tf.keras.callbacks.Callback):
         tracker.log(f"Completed batch {tracker.batch}/{batches_per_epoch} of epoch {tracker.epoch}/{EPOCHS}")
 
         tracker.save_status()
-        tracker.append_csv_history(total_batches, logs['accuracy'], logs['loss'])
+        tracker.append_csv_history(total_batches, logs)
         
         tracker.log(f"Saved status and history")
 

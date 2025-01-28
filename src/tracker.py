@@ -47,9 +47,12 @@ class Tracker:
         print(message)
         self.log(message)
 
-    def append_csv_history(self, batch, mse, loss):
+    def append_csv_history(self, batch, stats):
+        keys = stats.keys()
+        values = list(map(str, stats.values()))
+
         isfile = os.path.isfile(self.history_path)
         with open(self.history_path, 'a') as file:
             if not isfile:
-                file.write(f"batch,mse,loss\n")
-            file.write(f"{batch},{mse},{loss}\n")
+                file.write('batch,' + ','.join(keys) + '\n')
+            file.write(str(batch) + ',' + ','.join(values) + '\n')
