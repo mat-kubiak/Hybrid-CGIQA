@@ -7,26 +7,12 @@ from attention import SpatialAttention
 from ordinalcrossentropy import OrdinalCrossentropy
 
 def _hidden_layers(input_layer):
-    
-    # histogram path
-    h = NormalizedHistogram(nbins=256)(input_layer)
-    h = layers.Flatten()(h)
-
-    # convolution path
-    c = layers.Conv2D(filters=32, kernel_size=(7,7))(input_layer)
-    c = SpatialAttention()(c)
-    c = layers.MaxPooling2D(pool_size=(3,3))(c)
-    c = layers.Conv2D(filters=64, kernel_size=(7,7))(c)
-    c = layers.GlobalMaxPooling2D()(c)
-
-    # final path
-    x = layers.Concatenate()([h, c])
-    x = layers.Dense(units=128, activation='relu')(x)
-    x = layers.Dense(units=128, activation='relu')(x)
-    x = layers.Dropout(0.5)(x)
+    x = NormalizedHistogram(nbins=256)(input_layer)
+    x = layers.Flatten()(x)
+    x = layers.Dense(units=256, activation='relu')(x)
     return x
 
-def init_model_categorical(height, width, ratings):
+def init_model_categorical(height, width):
     input_layer = layers.Input(shape=(height, width, 3))
     hidden_layers = _hidden_layers(input_layer)
     output_layer = layers.Dense(units=41, activation='softmax')(hidden_layers)
