@@ -20,6 +20,7 @@ IS_CATEGORICAL = None
 
 TEST_BATCH_SIZE = 1
 LIMIT = 20
+PRINT_LIMIT = 20
 
 def load_image(path, label):
     image = images.load_image(path, HEIGHT, WIDTH, False)
@@ -40,7 +41,7 @@ def main():
     mos = labels.load(MOS_PATH, IMG_DIRPATH, IS_CATEGORICAL)
     print(f"Detected {len(mos)} labels and {len(img_paths)} images")
 
-    if LIMIT < len(mos):
+    if LIMIT != None and LIMIT < len(mos):
         print(f"Limited images to {LIMIT}")
         mos = mos[:LIMIT]
         img_paths = img_paths[:LIMIT]
@@ -54,13 +55,27 @@ def main():
     dataset = dataset.batch(TEST_BATCH_SIZE)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-    predictions = model.predict(dataset).flatten()
-    mae = np.abs(predictions - mos)
+    if IS_CATEGORICAL:
+        predictions = model.predict(dataset)
+        predictions = np.argmax(predictions, axis=1)
+        mos = np.argmax(mos, axis=1)
 
-    for i in range(len(predictions)):
-        print(f"{predictions[i]*100:.1f} {mos[i]*100:.1f} {mae[i]:.2f}")
-    
-    print(f"mae: {np.mean(mae)}")
+        accuracy = [predictions[i] == mos[i] for i in range(len(predictions))]
+        accuracy = np.sum(accuracy) / len(predictions) * 100
+
+        for i in range(min(PRINT_LIMIT, len(predictions))):
+            print(f"{predictions[i]} {mos[i]}")
+
+        print(f"accuracy: {accuracy:.2f}%")
+
+    else:
+        predictions = model.predict(dataset).flatten()
+        mae = np.abs(predictions - mos)
+
+        for i in range(min(PRINT_LIMIT, len(predictions))):
+            print(f"{predictions[i]*100:.1f} {mos[i]*100:.1f} {mae[i]:.2f}")
+        
+        print(f"mae: {np.mean(mae)}")
 
 if __name__ == '__main__':
     main()
