@@ -64,8 +64,10 @@ def initialize_model():
     
     except Exception as e:
         model = models.init_model(HEIGHT, WIDTH, IS_CATEGORICAL)
+        tf.keras.utils.plot_model(model, to_file=f"{OUTPUT_DIR}/arch.png", show_shapes=True, show_dtype=True, show_layer_names=True, show_trainable=True)
         tracker.logprint(f"Initialized new model")
     
+    model.summary()
     return model
 
 class CustomBatchCallback(tf.keras.callbacks.Callback):
@@ -105,7 +107,6 @@ def main():
     
     initialize_resources()
     model = initialize_model()
-    model.summary()
 
     dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
     dataset = dataset.map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
