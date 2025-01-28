@@ -16,7 +16,7 @@ IMG_DIRPATH = f'{DATA_PATH}/images/train'
 
 HEIGHT = None
 WIDTH = None
-CATEGORICAL = None
+IS_CATEGORICAL = None
 
 TEST_BATCH_SIZE = 1
 LIMIT = 20
@@ -26,21 +26,18 @@ def load_image(path, label):
     return image, label
 
 def main():
-    global HEIGHT, WIDTH
+    global HEIGHT, WIDTH, IS_CATEGORICAL
 
     model = models.load_model(MODEL_PATH)
     print(f"Loaded model")
 
     HEIGHT, WIDTH = model.input_shape[1:3]
     print(f"Found dimensions: width: {WIDTH}, height: {HEIGHT}")
-    CATEGORICAL = model.output_shape[-1] == 41
-    print(f"Detected model is categorical: {CATEGORICAL}")
+    IS_CATEGORICAL = model.output_shape[-1] == 41
+    print(f"Detected model is categorical: {IS_CATEGORICAL}")
 
     img_paths = images.get_image_list(IMG_DIRPATH)
-    if CATEGORICAL:
-        mos = labels.load_categorical(MOS_PATH, IMG_DIRPATH)
-    else:
-        mos = labels.load_continuous(MOS_PATH, IMG_DIRPATH)
+    mos = labels.load(MOS_PATH, IMG_DIRPATH, IS_CATEGORICAL)
     print(f"Detected {len(mos)} labels and {len(img_paths)} images")
 
     if LIMIT < len(mos):

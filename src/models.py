@@ -29,13 +29,12 @@ def _hidden_layers(input_layer):
 def init_model_categorical(height, width, ratings):
     input_layer = layers.Input(shape=(height, width, 3))
     hidden_layers = _hidden_layers(input_layer)
-    output_layer = layers.Dense(units=ratings, activation='softmax')(hidden_layers)
+    output_layer = layers.Dense(units=41, activation='softmax')(hidden_layers)
 
     model = keras.Model(inputs=input_layer, outputs=output_layer)
 
     model.compile(
         optimizer=keras.optimizers.Adam(),
-        # loss=keras.losses.SparseCategoricalCrossentropy(),
         loss=OrdinalCrossentropy(),
         metrics=["accuracy"]
     )
@@ -56,6 +55,11 @@ def init_model_continuous(height, width):
     )
 
     return model
+
+def init_model(height, width, is_categorical):
+    if is_categorical:
+        return init_model_categorical(height, width)
+    return init_model_continuous(height, width)
 
 def load_model(path):
     return keras.models.load_model(path)

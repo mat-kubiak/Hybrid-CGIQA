@@ -29,3 +29,8 @@ def load_continuous(mos_path, image_dir):
 
     normalized = mos / 5.0
     return normalized
+
+def load(mos_path, image_dir, is_categorical):
+    if is_categorical:
+        return load_categorical(mos_path, image_dir)
+    return load_continuous(mos_path, image_dir)
