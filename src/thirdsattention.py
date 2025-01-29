@@ -1,8 +1,9 @@
 import tensorflow as tf
 
 class ThirdsAttention(tf.keras.layers.Layer):
-    def __init__(self, **kwargs):
+    def __init__(self, reverse=False, **kwargs):
         super().__init__(**kwargs)
+        self.reverse = reverse
 
     def create_gaussian_2d(self, size=(100, 100), mean=(0.5, 0.5), sigma=(0.15, 0.15)):
         y = tf.linspace(0.0, 1.0, size[0])
@@ -24,8 +25,11 @@ class ThirdsAttention(tf.keras.layers.Layer):
         gaussian = self.create_gaussian_2d(size=dims, mean=(0.5, 0.333), sigma=(0.17, 0.07))
         gaussian += self.create_gaussian_2d(size=dims, mean=(0.5, 0.666), sigma=(0.17, 0.07))
         gaussian = gaussian / tf.reduce_max(gaussian)
-        
-        gaussian = tf.expand_dims(gaussian, axis=-1)  
+
+        if self.reverse:
+            gaussian = gaussian * -1. + 1.
+
+        gaussian = tf.expand_dims(gaussian, axis=-1)
         return inputs * gaussian
 
     def compute_output_shape(self, input_shape):
@@ -33,5 +37,9 @@ class ThirdsAttention(tf.keras.layers.Layer):
     
     def get_config(self):
         config = super().get_config()
-        config.update({'trainable': False})
+        config.update({'trainable': False, 'reverse': self.reverse})
         return config
+
+class ThirdsAttentionReversed(ThirdsAttention):
+    def __init__(self, **kwargs):
+        super().__init__(True, **kwargs)
