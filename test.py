@@ -73,9 +73,10 @@ def main():
         mae = np.abs(predictions - mos)
 
         for i in range(min(PRINT_LIMIT, len(predictions))):
-            print(f"{predictions[i]*100:.1f} {mos[i]*100:.1f} {mae[i]:.2f}")
+            print(f"{predictions[i]:.1f} {mos[i]:.1f} {mae[i]:.2f}")
         
         print(f"mae: {np.mean(mae)}")
+        print(f"highest mae: {np.max(mae)}")
 
 if __name__ == '__main__':
     main()
