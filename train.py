@@ -12,6 +12,7 @@ from tracker import Tracker
 DATA_DIR = f'{project_dir}/data'
 MOS_PATH = f'{DATA_DIR}/mos.csv'
 FIT_IMG_DIR = f'{DATA_DIR}/images/train'
+VAL_IMG_DIR = f'{DATA_DIR}/images/test'
 
 # output
 OUTPUT_DIR = f'{project_dir}/output'
@@ -21,17 +22,21 @@ BACKUP_PATH = f'{OUTPUT_DIR}/backup.keras'
 HEIGHT = 512
 WIDTH = 512
 FIT_BATCH_SIZE = 20
+VAL_BATCH_SIZE = 20
 EPOCHS = 50
 AUGMENT = False
 IS_CATEGORICAL = False
 
 # if set, limits data to n first samples
 FIT_LIMIT = None
+VAL_LIMIT = None
 
 tracker = None
 model = None
 fit_mos = None
 fit_imgs = None
+val_mos = None
+val_imgs = None
 batches_per_epoch = None
 total_batches = 0
 
@@ -45,7 +50,7 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 def initialize_resources():
-    global fit_mos, fit_imgs, batches_per_epoch
+    global fit_mos, fit_imgs, val_mos, val_imgs, batches_per_epoch
 
     fit_imgs = images.get_image_list(FIT_IMG_DIR)
     fit_mos = labels.load(MOS_PATH, FIT_IMG_DIR, IS_CATEGORICAL)
@@ -58,6 +63,15 @@ def initialize_resources():
 
     extra_batch_required = len(fit_imgs) % FIT_BATCH_SIZE != 0
     batches_per_epoch = math.floor(len(fit_imgs)/FIT_BATCH_SIZE) + extra_batch_required
+
+    val_mos = labels.load(MOS_PATH, VAL_IMG_DIR, IS_CATEGORICAL)
+    val_imgs = images.get_image_list(VAL_IMG_DIR)
+    tracker.logprint(f"Detected {len(val_mos)} validation labels and validation {len(val_imgs)} images")
+
+    if VAL_LIMIT != None:
+        val_mos = val_mos[:FIT_LIMIT]
+        val_imgs = val_imgs[:FIT_LIMIT]
+        tracker.logprint(f"Limiting validation data to {FIT_LIMIT} first samples")
 
 def initialize_model():
     try:
@@ -100,6 +114,10 @@ def load_image(path, label):
     image = images.load_image(path, HEIGHT, WIDTH, AUGMENT)
     return image, label
 
+def load_val_image(path, label):
+    image = images.load_image(path, HEIGHT, WIDTH, False)
+    return image, label
+
 def main():
     global model, tracker
 
@@ -117,11 +135,18 @@ def main():
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
 
+    val_dataset = (tf.data.Dataset.from_tensor_slices((val_imgs, val_mos))
+        .map(load_val_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        .batch(VAL_BATCH_SIZE)
+        .prefetch(tf.data.experimental.AUTOTUNE)
+    )
+
     custom_callback = CustomBatchCallback()
 
     history = model.fit(
         dataset,
         verbose=1,
+        validation_data=val_dataset,
         initial_epoch=tracker.epoch,
         epochs=EPOCHS,
         callbacks=[custom_callback]
