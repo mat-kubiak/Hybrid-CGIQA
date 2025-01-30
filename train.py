@@ -20,8 +20,8 @@ BACKUP_PATH = f'{OUTPUT_DIR}/backup.keras'
 
 HEIGHT = 512
 WIDTH = 512
-BATCH_SIZE = 5
-EPOCHS = 5
+BATCH_SIZE = 20
+EPOCHS = 50
 LIMIT = None # change to a number to limit training to n first sampless
 AUGMENT = False
 IS_CATEGORICAL = False
