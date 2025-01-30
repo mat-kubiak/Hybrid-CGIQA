@@ -5,7 +5,9 @@ def _load_data(mos_path, image_dir):
     with open(mos_path, "r") as csv_file:
         reader = csv.reader(csv_file)
         parsed_data = [row for row in reader]
-    rows = parsed_data[1:]
+
+    rows = np.array(parsed_data[1:])
+    rows = rows[np.argsort(rows[:, 0])]
 
     imgpaths = sorted(os.listdir(image_dir))
     filtered_rows = np.array([row for row in rows if row[0] in imgpaths])
