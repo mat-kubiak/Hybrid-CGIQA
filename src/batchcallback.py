@@ -1,15 +1,17 @@
+import tensorflow as tf
 
 class BatchCallback(tf.keras.callbacks.Callback):
 
-    def __init__(self, tracker, target_epochs, model_path, **kwargs):
+    def __init__(self, tracker, target_epochs, model_path, batches_per_epoch, **kwargs):
         super().__init__(**kwargs)
         self.tracker = tracker
         self.target_epochs = target_epochs
         self.model_path = model_path
+        self.batches_per_epoch = batches_per_epoch
 
     def on_batch_end(self, batch, logs=None):
         self.tracker.batch = batch + 1
-        self.tracker.log(f"Completed batch {self.tracker.batch}/{batches_per_epoch} of epoch {self.tracker.epoch}/{self.target_epochs}")
+        self.tracker.log(f"Completed batch {self.tracker.batch}/{self.batches_per_epoch} of epoch {self.tracker.epoch}/{self.target_epochs}")
 
         self.tracker.save_status()
         self.tracker.append_csv_history(logs)

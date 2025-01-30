@@ -117,7 +117,7 @@ def main():
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
 
-    batch_callback = BatchCallback(tracker, EPOCHS, MODEL_PATH)
+    batch_callback = BatchCallback(tracker, EPOCHS, MODEL_PATH, batches_per_epoch)
     csv_logger = tf.keras.callbacks.CSVLogger(f"{OUTPUT_DIR}/epoch-history.csv", append=True)
 
     history = model.fit(
