@@ -142,6 +142,7 @@ def main():
     )
 
     custom_callback = CustomBatchCallback()
+    csv_logger = tf.keras.callbacks.CSVLogger(f"{OUTPUT_DIR}/epoch-history.csv", append=True)
 
     history = model.fit(
         dataset,
@@ -149,7 +150,7 @@ def main():
         validation_data=val_dataset,
         initial_epoch=tracker.epoch,
         epochs=EPOCHS,
-        callbacks=[custom_callback]
+        callbacks=[custom_callback, csv_logger]
     )
 
     tracker.logprint("Program completed")

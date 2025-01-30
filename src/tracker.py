@@ -5,7 +5,7 @@ class Tracker:
     def __init__(self, output_dir):
         self.log_path = f'{output_dir}/log.txt'
         self.status_path = f'{output_dir}/status.ini'
-        self.history_path = f'{output_dir}/history.csv'
+        self.history_path = f'{output_dir}/batch-history.csv'
 
         self.batch = 0
         self.epoch = 0
