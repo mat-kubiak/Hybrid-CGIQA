@@ -1,5 +1,13 @@
 import os, datetime, configparser
 
+def _get_last_line(path):
+    with open(path, "rb") as f:
+        f.seek(-2, 2)
+        while f.read(1) != b"\n":
+            f.seek(-2, 1)
+        last_line = f.readline().decode()
+    return last_line
+
 class Tracker:
 
     def __init__(self, output_dir):
@@ -9,6 +17,7 @@ class Tracker:
 
         self.batch = 0
         self.epoch = 0
+        self.batch_counter = 0
 
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
@@ -47,7 +56,7 @@ class Tracker:
         print(message)
         self.log(message)
 
-    def append_csv_history(self, batch, stats):
+    def append_csv_history(self, stats):
         keys = stats.keys()
         values = list(map(str, stats.values()))
 
@@ -55,4 +64,6 @@ class Tracker:
         with open(self.history_path, 'a') as file:
             if not isfile:
                 file.write('batch,' + ','.join(keys) + '\n')
-            file.write(str(batch) + ',' + ','.join(values) + '\n')
+            file.write(str(self.batch_counter) + ',' + ','.join(values) + '\n')
+        
+        self.batch_counter += 1

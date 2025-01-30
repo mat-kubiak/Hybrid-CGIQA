@@ -38,7 +38,6 @@ fit_imgs = None
 val_mos = None
 val_imgs = None
 batches_per_epoch = None
-total_batches = 0
 
 def signal_handler(sig, frame):
     tracker.logprint(f"Received signal {sig}")
@@ -88,14 +87,11 @@ def initialize_model():
 
 class CustomBatchCallback(tf.keras.callbacks.Callback):
     def on_batch_end(self, batch, logs=None):
-        global total_batches
-
         tracker.batch = batch + 1
-        total_batches += 1
         tracker.log(f"Completed batch {tracker.batch}/{batches_per_epoch} of epoch {tracker.epoch}/{EPOCHS}")
 
         tracker.save_status()
-        tracker.append_csv_history(total_batches, logs)
+        tracker.append_csv_history(logs)
         
         tracker.log(f"Saved status and history")
 
