@@ -3,7 +3,7 @@ from tensorflow.keras.layers import Layer
 
 class RGBToHSV(Layer):
     def __init__(self, **kwargs):
-        super(RGBToHSV, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def call(self, inputs):
         inputs = tf.clip_by_value(inputs, 0.0, 1.0)

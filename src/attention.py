@@ -3,7 +3,7 @@ from tensorflow.keras import layers
 
 class SpatialAttention(layers.Layer):
     def __init__(self, kernel_size=7, **kwargs):
-        super(SpatialAttention, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.kernel_size = kernel_size
 
     def build(self, input_shape):
