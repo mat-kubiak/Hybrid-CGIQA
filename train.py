@@ -9,9 +9,9 @@ import images, labels, models
 from tracker import Tracker
 
 # input
-DATA_PATH = f'{project_dir}/data'
-MOS_PATH = f'{DATA_PATH}/mos.csv'
-IMG_DIRPATH = f'{DATA_PATH}/images/train'
+DATA_DIR = f'{project_dir}/data'
+MOS_PATH = f'{DATA_DIR}/mos.csv'
+FIT_IMG_DIR = f'{DATA_DIR}/images/train'
 
 # output
 OUTPUT_DIR = f'{project_dir}/output'
@@ -20,16 +20,18 @@ BACKUP_PATH = f'{OUTPUT_DIR}/backup.keras'
 
 HEIGHT = 512
 WIDTH = 512
-BATCH_SIZE = 20
+FIT_BATCH_SIZE = 20
 EPOCHS = 50
-LIMIT = None # change to a number to limit training to n first sampless
 AUGMENT = False
 IS_CATEGORICAL = False
 
+# if set, limits data to n first samples
+FIT_LIMIT = None
+
 tracker = None
-mos = None
 model = None
-img_paths = None
+fit_mos = None
+fit_imgs = None
 batches_per_epoch = None
 total_batches = 0
 
@@ -43,19 +45,19 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 def initialize_resources():
-    global mos, img_paths, batches_per_epoch
+    global fit_mos, fit_imgs, batches_per_epoch
 
-    img_paths = images.get_image_list(IMG_DIRPATH)
-    mos = labels.load(MOS_PATH, IMG_DIRPATH, IS_CATEGORICAL)
-    tracker.logprint(f"Detected {len(mos)} labels and {len(img_paths)} images")
+    fit_imgs = images.get_image_list(FIT_IMG_DIR)
+    fit_mos = labels.load(MOS_PATH, FIT_IMG_DIR, IS_CATEGORICAL)
+    tracker.logprint(f"Detected {len(fit_mos)} labels and {len(fit_imgs)} images")
 
-    if LIMIT != None:
-        img_paths = img_paths[:LIMIT]
-        mos = mos[:LIMIT]
-        tracker.logprint(f"Limiting data to {LIMIT} first samples")
+    if FIT_LIMIT != None:
+        fit_imgs = fit_imgs[:FIT_LIMIT]
+        fit_mos = fit_mos[:FIT_LIMIT]
+        tracker.logprint(f"Limiting data to {FIT_LIMIT} first samples")
 
-    extra_batch_required = len(img_paths) % BATCH_SIZE != 0
-    batches_per_epoch = math.floor(len(img_paths)/BATCH_SIZE) + extra_batch_required
+    extra_batch_required = len(fit_imgs) % FIT_BATCH_SIZE != 0
+    batches_per_epoch = math.floor(len(fit_imgs)/FIT_BATCH_SIZE) + extra_batch_required
 
 def initialize_model():
     try:
@@ -108,16 +110,23 @@ def main():
     initialize_resources()
     model = initialize_model()
 
-    dataset = tf.data.Dataset.from_tensor_slices((img_paths, mos))
-    dataset = dataset.map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    dataset = dataset.shuffle(buffer_size=1000)
-    dataset = dataset.batch(BATCH_SIZE)
-    dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
+    dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos))
+        .map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        .shuffle(buffer_size=1000)
+        .batch(FIT_BATCH_SIZE)
+        .prefetch(tf.data.experimental.AUTOTUNE)
+    )
 
     custom_callback = CustomBatchCallback()
 
-    history = model.fit(dataset, verbose=1, initial_epoch=tracker.epoch, epochs=EPOCHS, callbacks=[custom_callback])
-    
+    history = model.fit(
+        dataset,
+        verbose=1,
+        initial_epoch=tracker.epoch,
+        epochs=EPOCHS,
+        callbacks=[custom_callback]
+    )
+
     tracker.logprint("Program completed")
 
 if __name__ == '__main__':
