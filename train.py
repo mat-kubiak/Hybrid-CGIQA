@@ -7,6 +7,7 @@ sys.path.append(f'{project_dir}/src')
 
 import images, labels, models
 from tracker import Tracker
+from batchcallback import BatchCallback
 
 # input
 DATA_DIR = f'{project_dir}/data'
@@ -85,27 +86,6 @@ def initialize_model():
     model.summary()
     return model
 
-class CustomBatchCallback(tf.keras.callbacks.Callback):
-    def on_batch_end(self, batch, logs=None):
-        tracker.batch = batch + 1
-        tracker.log(f"Completed batch {tracker.batch}/{batches_per_epoch} of epoch {tracker.epoch}/{EPOCHS}")
-
-        tracker.save_status()
-        tracker.append_csv_history(logs)
-        
-        tracker.log(f"Saved status and history")
-
-    def on_epoch_end(self, epoch, logs=None):
-        tracker.epoch = epoch + 1
-        tracker.batch = 0
-
-        tracker.log(f"Completed epoch {tracker.epoch}/{EPOCHS} completed")
-        
-        tracker.save_status()
-        models.save_model(self.model, MODEL_PATH)
-        
-        tracker.log(f"Saved model")
-
 def load_image(path, label):
     image = images.load_image(path, HEIGHT, WIDTH, AUGMENT)
     return image, label
@@ -137,7 +117,7 @@ def main():
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
 
-    custom_callback = CustomBatchCallback()
+    batch_callback = BatchCallback(tracker, EPOCHS, MODEL_PATH)
     csv_logger = tf.keras.callbacks.CSVLogger(f"{OUTPUT_DIR}/epoch-history.csv", append=True)
 
     history = model.fit(
@@ -146,7 +126,7 @@ def main():
         validation_data=val_dataset,
         initial_epoch=tracker.epoch,
         epochs=EPOCHS,
-        callbacks=[custom_callback, csv_logger]
+        callbacks=[batch_callback, csv_logger]
     )
 
     tracker.logprint("Program completed")
