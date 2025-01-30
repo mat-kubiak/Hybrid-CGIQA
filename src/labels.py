@@ -15,6 +15,15 @@ def _load_data(mos_path, image_dir):
     mos = filtered_rows[:, 1]
     return mos.astype(np.float32)
 
+def load_ordinal(mos_path, image_dir):
+    mos = _load_data(mos_path, image_dir)
+    rescaled = np.round(mos / 5.0 * 4.0 + 1, 1)
+
+    cats = np.arange(1.0, 5.1, 0.05)
+    ordinal_encoded = np.searchsorted(cats, rescaled)
+
+    return ordinal_encoded
+
 def load_categorical(mos_path, image_dir):
     mos = _load_data(mos_path, image_dir)
     rescaled = np.round(mos / 5.0 * 4.0 + 1, 1)
