@@ -27,8 +27,8 @@ def get_augmentation_model():
         layers.RandomTranslation(0.05, 0.05),
         layers.RandomZoom(0.05),
         
-        layers.RandomBrightness(0.02),
-        layers.RandomContrast(0.02),
+        layers.RandomBrightness(0.02, value_range=(0, 1)),
+        layers.RandomContrast(0.02, value_range=(0, 1)),
     ])
 
     return model

@@ -91,7 +91,9 @@ def load_image(path, label):
     return image, label
 
 def augment_image(image, label):
-    return augment_model(image, training=True), label
+    image = augment_model(image, training=True)
+    image = tf.clip_by_value(image, 0.0, 1.0)
+    return image, label
 
 def main():
     global model, tracker, augment_model
