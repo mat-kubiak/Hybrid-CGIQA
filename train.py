@@ -24,8 +24,7 @@ MODEL_NAME = ''
 OUTPUT_DIR = f'{PROJECT_DIR}/output/{MODEL_NAME}'
 
 STATUS_FILE = f'{OUTPUT_DIR}/status.ini'
-MODEL_FILE = f'{OUTPUT_DIR}/model.keras'
-BACKUP_FILE = f'{OUTPUT_DIR}/backup.keras'
+MODEL_FILE = f'{OUTPUT_DIR}/model'
 
 HEIGHT = 512
 WIDTH = 512
@@ -48,12 +47,7 @@ val_imgs = None
 batches_per_epoch = None
 
 def signal_handler(sig, frame):
-    tracker.logprint(f"Received signal {sig}")
-    
-    models.save_model(model, BACKUP_FILE)
-
-    tracker.logprint(f"Backup saved at batch {tracker.batch}/{batches_per_epoch} epoch {tracker.epoch}/{EPOCHS}")
-    tracker.logprint(f"Exiting...")
+    tracker.logprint(f"Received signal {sig}, exiting...")
     sys.exit(0)
 
 def initialize_resources():
