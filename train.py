@@ -1,4 +1,4 @@
-import os, sys, time, signal, math
+import os, sys, time, signal, math, datetime
 import tensorflow as tf
 import numpy as np
 
@@ -120,13 +120,16 @@ def main():
     batch_callback = BatchCallback(tracker, EPOCHS, MODEL_PATH, batches_per_epoch)
     csv_logger = tf.keras.callbacks.CSVLogger(f"{OUTPUT_DIR}/epoch-history.csv", append=True)
 
+    log_dir = f"{OUTPUT_DIR}/logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
     history = model.fit(
         dataset,
         verbose=1,
         validation_data=val_dataset,
         initial_epoch=tracker.epoch,
         epochs=EPOCHS,
-        callbacks=[batch_callback, csv_logger]
+        callbacks=[batch_callback, csv_logger, tensorboard_callback]
     )
 
     tracker.logprint("Program completed")
