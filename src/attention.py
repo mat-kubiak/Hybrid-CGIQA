@@ -12,18 +12,17 @@ class SpatialAttention(layers.Layer):
                            strides=1,
                            padding="same",
                            activation="sigmoid")
-        super(SpatialAttention, self).build(input_shape)
+        super().build(input_shape)
 
     def call(self, inputs, **kwargs):
         avg_pool = tf.reduce_mean(inputs, axis=-1, keepdims=True)
         max_pool = tf.reduce_max(inputs, axis=-1, keepdims=True)
         
-        concat = Concatenate(axis=-1)([avg_pool, max_pool])
+        concat = tf.concat([avg_pool, max_pool], axis=-1)
         
         attention_map = self.conv(concat)
 
-        output = layers.Multiply()([inputs, attention_map])
-        return output
+        return inputs * attention_map
 
     def get_config(self):
         config = super(SpatialAttention, self).get_config()
