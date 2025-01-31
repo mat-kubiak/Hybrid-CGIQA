@@ -1,4 +1,4 @@
-import os, datetime, configparser
+import os, configparser
 
 class Tracker:
 
@@ -11,7 +11,7 @@ class Tracker:
 
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
         os.makedirs(os.path.dirname(status_path), exist_ok=True)
-        
+
         if not os.path.isfile(self.status_path):
             self.save_status()
             self.logprint("Created status file")
