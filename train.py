@@ -20,7 +20,9 @@ TIMESTAMP = datetime.datetime.now().strftime("%y-%m-%d_%H-%M-%S")
 LOG_FILE = f'{PROJECT_DIR}/logs/{TIMESTAMP}.txt'
 
 # output
-OUTPUT_DIR = f'{PROJECT_DIR}/output'
+MODEL_NAME = ''
+OUTPUT_DIR = f'{PROJECT_DIR}/output/{MODEL_NAME}'
+
 STATUS_FILE = f'{OUTPUT_DIR}/status.ini'
 MODEL_FILE = f'{OUTPUT_DIR}/model.keras'
 BACKUP_FILE = f'{OUTPUT_DIR}/backup.keras'
@@ -103,7 +105,9 @@ def augment_image(image, label):
 def main():
     global model, tracker, augment_model
 
-    tracker = Tracker(log_path=lOG_FILE, status_path=STATUS_FILE)
+    os.makedirs(os.path.dirname(OUTPUT_DIR), exist_ok=True)
+
+    tracker = Tracker(log_path=LOG_FILE, status_path=STATUS_FILE)
 
     tracker.logprint("Program starting up...")
     
@@ -126,10 +130,9 @@ def main():
     )
 
     batch_callback = BatchCallback(tracker, EPOCHS, MODEL_FILE, batches_per_epoch)
-    csv_logger = tf.keras.callbacks.CSVLogger(f"{OUTPUT_DIR}/epoch-history.csv", append=True)
+    csv_logger = tf.keras.callbacks.CSVLogger(f"{OUTPUT_DIR}/history.csv", append=True)
 
-    log_dir = f"{OUTPUT_DIR}/logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=OUTPUT_DIR, write_graph=True, histogram_freq=1)
 
     history = model.fit(
         dataset,
