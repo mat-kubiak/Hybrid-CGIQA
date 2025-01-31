@@ -18,7 +18,7 @@ class Tracker:
             self.logprint("Created status file")
         else:
             self.load_status()
-            obj = {'epoch': self.epoch, 'batch': self.batch}
+            obj = {'epoch': self.epoch}
             self.logprint(f"Loaded status file: {obj}")
 
     def load_status(self):
@@ -26,13 +26,11 @@ class Tracker:
         config.read(self.status_path)
         
         self.epoch = config.getint('progress', 'epoch', fallback=0)
-        self.batch = config.getint('progress', 'batch', fallback=0) 
 
     def save_status(self):
         config = configparser.ConfigParser()
         config['progress'] = {
             'epoch': self.epoch,
-            'batch': self.batch
         }
         
         with open(self.status_path, 'w') as configfile:
