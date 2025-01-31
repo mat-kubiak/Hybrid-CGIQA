@@ -114,4 +114,4 @@ def save_model(model, path):
     if model is None:
         raise ValueError("Model has not been created.")
     
-    model.save(path, save_format="tf")
+    model.save(path)
