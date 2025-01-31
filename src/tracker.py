@@ -2,16 +2,15 @@ import os, datetime, configparser
 
 class Tracker:
 
-    def __init__(self, output_dir):
-        self.log_path = f'{output_dir}/log.txt'
-        self.status_path = f'{output_dir}/status.ini'
-        self.history_path = f'{output_dir}/batch-history.csv'
+    def __init__(self, log_path, status_path):
+        self.log_path = log_path
+        self.status_path = status_path
 
         self.batch = 0
         self.epoch = 0
 
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        os.makedirs(os.path.dirname(status_path), exist_ok=True)
         
         if not os.path.isfile(self.status_path):
             self.save_status()

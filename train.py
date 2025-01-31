@@ -15,8 +15,13 @@ MOS_FILE = f'{DATA_DIR}/mos.csv'
 FIT_IMG_DIR = f'{DATA_DIR}/images/train'
 VAL_IMG_DIR = f'{DATA_DIR}/images/test'
 
+# logging
+TIMESTAMP = datetime.datetime.now().strftime("%y-%m-%d_%H-%M-%S")
+LOG_FILE = f'{PROJECT_DIR}/logs/{TIMESTAMP}.txt'
+
 # output
 OUTPUT_DIR = f'{PROJECT_DIR}/output'
+STATUS_FILE = f'{OUTPUT_DIR}/status.ini'
 MODEL_FILE = f'{OUTPUT_DIR}/model.keras'
 BACKUP_FILE = f'{OUTPUT_DIR}/backup.keras'
 
@@ -98,7 +103,7 @@ def augment_image(image, label):
 def main():
     global model, tracker, augment_model
 
-    tracker = Tracker(OUTPUT_DIR)
+    tracker = Tracker(log_path=lOG_FILE, status_path=STATUS_FILE)
 
     tracker.logprint("Program starting up...")
     
