@@ -28,25 +28,35 @@ def _hidden_layers(input_layer):
     h = NormalizedHistogram(nbins=256)(h)
     h = layers.Flatten()(h)
     h = layers.Dense(units=512, activation='relu')(h)
+    h = layers.Dropout(0.4)(h)
 
     # conv route
     c = layers.Conv2D(kernel_size=(3,3), filters=32)(input_layer)
     c = layers.Conv2D(kernel_size=(3,3), filters=32)(c)
-    c = layers.AveragePooling2D(pool_size=(4,4))(c)
+    c = SpatialAttention()(c)
+    c = layers.AveragePooling2D(pool_size=(3,3))(c)
     
     c = layers.Conv2D(kernel_size=(3,3), filters=64)(c)
     c = layers.Conv2D(kernel_size=(3,3), filters=64)(c)
-    c = layers.AveragePooling2D(pool_size=(4,4))(c)
-    
+    c = SpatialAttention()(c)
+    c = layers.AveragePooling2D(pool_size=(3,3))(c)
+
+    c = layers.Conv2D(kernel_size=(3,3), filters=128)(c)
+    c = layers.Conv2D(kernel_size=(3,3), filters=128)(c)
+    c = SpatialAttention()(c)
+    c = layers.AveragePooling2D(pool_size=(3,3))(c)
+
     c = layers.Conv2D(kernel_size=(1,1), filters=1, activation="linear")(c)
     c = layers.Flatten()(c)
 
     c = layers.Dense(units=512, activation="relu")(c)
+    c = layers.Dropout(0.4)(c)
 
     # merge
     x = layers.Concatenate()([h, c])
     x = layers.Dense(units=512, activation="relu")(x)
     x = layers.Dense(units=256, activation="relu")(x)
+    x = layers.Dropout(0.4)(x)
 
     return x
 
