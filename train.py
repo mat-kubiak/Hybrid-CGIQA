@@ -99,14 +99,7 @@ def main():
     initialize_resources()
     model = initialize_model()
 
-    augment_image = keras.Sequential([
-        layers.RandomRotation(0.05),
-        layers.RandomTranslation(0.05, 0.05),
-        layers.RandomZoom(0.05),
-        
-        layers.RandomBrightness(0.02),
-        layers.RandomContrast(0.02),
-    ])
+    augment_image = models.get_augmentation_model()
 
     dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos))
         .map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)

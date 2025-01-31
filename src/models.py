@@ -21,6 +21,18 @@ def _squeeze_excite(input_layer, reduction_ratio=6):
 
     return x
 
+def get_augmentation_model():
+    model = keras.Sequential([
+        layers.RandomRotation(0.05),
+        layers.RandomTranslation(0.05, 0.05),
+        layers.RandomZoom(0.05),
+        
+        layers.RandomBrightness(0.02),
+        layers.RandomContrast(0.02),
+    ])
+
+    return model
+
 def _hidden_layers(input_layer):
     
     # hist route
