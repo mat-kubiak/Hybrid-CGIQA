@@ -2,23 +2,23 @@ import os, sys, time, signal, math, datetime
 import tensorflow as tf
 import numpy as np
 
-project_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(f'{project_dir}/src')
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(f'{PROJECT_DIR}/src')
 
 import images, labels, models
 from tracker import Tracker
 from batchcallback import BatchCallback
 
 # input
-DATA_DIR = f'{project_dir}/data'
-MOS_PATH = f'{DATA_DIR}/mos.csv'
+DATA_DIR = f'{PROJECT_DIR}/data'
+MOS_FILE = f'{DATA_DIR}/mos.csv'
 FIT_IMG_DIR = f'{DATA_DIR}/images/train'
 VAL_IMG_DIR = f'{DATA_DIR}/images/test'
 
 # output
-OUTPUT_DIR = f'{project_dir}/output'
-MODEL_PATH = f'{OUTPUT_DIR}/model.keras'
-BACKUP_PATH = f'{OUTPUT_DIR}/backup.keras'
+OUTPUT_DIR = f'{PROJECT_DIR}/output'
+MODEL_FILE = f'{OUTPUT_DIR}/model.keras'
+BACKUP_FILE = f'{OUTPUT_DIR}/backup.keras'
 
 HEIGHT = 512
 WIDTH = 512
@@ -43,7 +43,7 @@ batches_per_epoch = None
 def signal_handler(sig, frame):
     tracker.logprint(f"Received signal {sig}")
     
-    models.save_model(model, BACKUP_PATH)
+    models.save_model(model, BACKUP_FILE)
 
     tracker.logprint(f"Backup saved at batch {tracker.batch}/{batches_per_epoch} epoch {tracker.epoch}/{EPOCHS}")
     tracker.logprint(f"Exiting...")
@@ -53,7 +53,7 @@ def initialize_resources():
     global fit_mos, fit_imgs, val_mos, val_imgs, batches_per_epoch
 
     fit_imgs = images.get_image_list(FIT_IMG_DIR)
-    fit_mos = labels.load(MOS_PATH, FIT_IMG_DIR, IS_CATEGORICAL)
+    fit_mos = labels.load(MOS_FILE, FIT_IMG_DIR, IS_CATEGORICAL)
     tracker.logprint(f"Detected {len(fit_mos)} labels and {len(fit_imgs)} images")
 
     if FIT_LIMIT != None:
@@ -64,7 +64,7 @@ def initialize_resources():
     extra_batch_required = len(fit_imgs) % FIT_BATCH_SIZE != 0
     batches_per_epoch = math.floor(len(fit_imgs)/FIT_BATCH_SIZE) + extra_batch_required
 
-    val_mos = labels.load(MOS_PATH, VAL_IMG_DIR, IS_CATEGORICAL)
+    val_mos = labels.load(MOS_FILE, VAL_IMG_DIR, IS_CATEGORICAL)
     val_imgs = images.get_image_list(VAL_IMG_DIR)
     tracker.logprint(f"Detected {len(val_mos)} validation labels and validation {len(val_imgs)} images")
 
@@ -75,7 +75,7 @@ def initialize_resources():
 
 def initialize_model():
     try:
-        model = models.load_model(MODEL_PATH)
+        model = models.load_model(MODEL_FILE)
         tracker.logprint(f"Loaded model from file")
     
     except Exception as e:
@@ -120,7 +120,7 @@ def main():
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
 
-    batch_callback = BatchCallback(tracker, EPOCHS, MODEL_PATH, batches_per_epoch)
+    batch_callback = BatchCallback(tracker, EPOCHS, MODEL_FILE, batches_per_epoch)
     csv_logger = tf.keras.callbacks.CSVLogger(f"{OUTPUT_DIR}/epoch-history.csv", append=True)
 
     log_dir = f"{OUTPUT_DIR}/logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
