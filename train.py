@@ -33,6 +33,7 @@ VAL_LIMIT = None
 
 tracker = None
 model = None
+augment_model = None
 fit_mos = None
 fit_imgs = None
 val_mos = None
@@ -89,8 +90,11 @@ def load_image(path, label):
     image = images.load_image(path, HEIGHT, WIDTH)
     return image, label
 
+def augment_image(image, label):
+    return augment_model(image, training=True), label
+
 def main():
-    global model, tracker
+    global model, tracker, augment_model
 
     tracker = Tracker(OUTPUT_DIR)
 
@@ -98,8 +102,7 @@ def main():
     
     initialize_resources()
     model = initialize_model()
-
-    augment_image = models.get_augmentation_model()
+    augment_model = models.get_augmentation_model()
 
     dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos))
         .map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
