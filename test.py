@@ -23,7 +23,7 @@ LIMIT = 20
 PRINT_LIMIT = 20
 
 def load_image(path, label):
-    image = images.load_image(path, HEIGHT, WIDTH, False)
+    image = images.load_image(path, HEIGHT, WIDTH)
     return image, label
 
 def main():

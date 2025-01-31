@@ -25,7 +25,6 @@ WIDTH = 512
 FIT_BATCH_SIZE = 20
 VAL_BATCH_SIZE = 20
 EPOCHS = 50
-AUGMENT = False
 IS_CATEGORICAL = False
 
 # if set, limits data to n first samples
@@ -87,11 +86,7 @@ def initialize_model():
     return model
 
 def load_image(path, label):
-    image = images.load_image(path, HEIGHT, WIDTH, AUGMENT)
-    return image, label
-
-def load_val_image(path, label):
-    image = images.load_image(path, HEIGHT, WIDTH, False)
+    image = images.load_image(path, HEIGHT, WIDTH)
     return image, label
 
 def main():
@@ -104,15 +99,25 @@ def main():
     initialize_resources()
     model = initialize_model()
 
+    augment_image = keras.Sequential([
+        layers.RandomRotation(0.05),
+        layers.RandomTranslation(0.05, 0.05),
+        layers.RandomZoom(0.05),
+        
+        layers.RandomBrightness(0.02),
+        layers.RandomContrast(0.02),
+    ])
+
     dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos))
         .map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        .map(augment_image, num_parallel_calls=tf.data.AUTOTUNE)
         .shuffle(buffer_size=1000)
         .batch(FIT_BATCH_SIZE)
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
 
     val_dataset = (tf.data.Dataset.from_tensor_slices((val_imgs, val_mos))
-        .map(load_val_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        .map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         .batch(VAL_BATCH_SIZE)
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
