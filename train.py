@@ -33,6 +33,7 @@ FIT_BATCH_SIZE = 20
 VAL_BATCH_SIZE = 20
 EPOCHS = 50
 IS_CATEGORICAL = False
+ANTIALIASING = False
 
 # if set, limits data to n first samples
 FIT_LIMIT = None
@@ -94,7 +95,7 @@ def initialize_model():
     return model
 
 def load_image(path, label):
-    image = images.load_image(path, HEIGHT, WIDTH)
+    image = images.load_image(path, HEIGHT, WIDTH, ANTIALIASING)
     return image, label
 
 def augment_image(image, label):
