@@ -168,3 +168,4 @@ models/
 output/
 nohup.out
 arch.png
+logs/
