@@ -34,6 +34,7 @@ VAL_BATCH_SIZE = 20
 EPOCHS = 50
 IS_CATEGORICAL = False
 ANTIALIASING = False
+AUGMENT = False
 
 # if set, limits data to n first samples
 FIT_LIMIT = None
@@ -99,6 +100,9 @@ def load_image(path, label):
     return image, label
 
 def augment_image(image, label):
+    if not AUGMENT:
+        return image, label
+
     image = augment_model(image, training=True)
     image = tf.clip_by_value(image, 0.0, 1.0)
     return image, label
