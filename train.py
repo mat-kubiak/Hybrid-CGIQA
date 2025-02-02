@@ -84,6 +84,7 @@ def initialize_resources():
         tracker.logprint(f"Limiting validation data to {FIT_LIMIT} first samples")
 
 def log_hparams():
+    global model
     hparams = {
         'resolution': f'{HEIGHT}x{WIDTH}',
         'batch_size': FIT_BATCH_SIZE,
@@ -91,13 +92,21 @@ def log_hparams():
         'output': 'categorical' if IS_CATEGORICAL else 'numerical',
         'image_antialiasing': ANTIALIASING,
         'image_augmentation': AUGMENT,
+        'total_layers': len(model.layers),
+        'optimizer': model.optimizer.__class__.__name__,
+        'trainable_params': model.count_params(),
+        'loss': model.loss.__class__.__name__,
     }
+
+    print(hparams)
 
     writer = tf.summary.create_file_writer(OUTPUT_DIR)
     with writer.as_default():
         hp.hparams(hparams)
 
 def initialize_model():
+    global model
+
     try:
         model = models.load_model(MODEL_FILE)
         tracker.logprint(f"Loaded model from file")
@@ -109,7 +118,6 @@ def initialize_model():
     
     model.summary()
     log_hparams()
-    return model
 
 def load_image(path, label):
     image = images.load_image(path, HEIGHT, WIDTH, ANTIALIASING)
@@ -133,7 +141,7 @@ def main():
     tracker.logprint("Program starting up...")
     
     initialize_resources()
-    model = initialize_model()
+    initialize_model()
     augment_model = models.get_augmentation_model()
 
     dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos))
