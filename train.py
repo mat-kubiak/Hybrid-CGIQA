@@ -1,6 +1,7 @@
 import os, sys, time, signal, math, datetime
 import tensorflow as tf
 import numpy as np
+from tensorboard.plugins.hparams import api as hp
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(f'{PROJECT_DIR}/src')
@@ -82,6 +83,20 @@ def initialize_resources():
         val_imgs = val_imgs[:FIT_LIMIT]
         tracker.logprint(f"Limiting validation data to {FIT_LIMIT} first samples")
 
+def log_hparams():
+    hparams = {
+        'resolution': f'{HEIGHT}x{WIDTH}',
+        'batch_size': FIT_BATCH_SIZE,
+        'epochs': EPOCHS,
+        'output': 'categorical' if IS_CATEGORICAL else 'numerical',
+        'image_antialiasing': ANTIALIASING,
+        'image_augmentation': AUGMENT,
+    }
+
+    writer = tf.summary.create_file_writer(OUTPUT_DIR)
+    with writer.as_default():
+        hp.hparams(hparams)
+
 def initialize_model():
     try:
         model = models.load_model(MODEL_FILE)
@@ -93,6 +108,7 @@ def initialize_model():
         tracker.logprint(f"Initialized new model")
     
     model.summary()
+    log_hparams()
     return model
 
 def load_image(path, label):
