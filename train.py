@@ -87,7 +87,7 @@ def initialize_model():
     
     except Exception as e:
         model = models.init_model(HEIGHT, WIDTH, IS_CATEGORICAL)
-        tf.keras.utils.plot_model(model, to_file=f"{OUTPUT_DIR}/arch.png", show_shapes=True, show_dtype=True, show_layer_names=True, show_trainable=True)
+        tf.keras.utils.plot_model(model, to_file=f"{OUTPUT_DIR}/arch.png", show_shapes=True, show_dtype=True, show_layer_names=True)
         tracker.logprint(f"Initialized new model")
     
     model.summary()
