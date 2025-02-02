@@ -8,22 +8,23 @@ sys.path.append(f'{project_dir}/src')
 
 import images, labels, models
 
-MODEL_PATH = f'{project_dir}/output/model.keras'
+MODEL_NAME = ''
+MODEL_PATH = f'{project_dir}/output/{MODEL_NAME}/model.keras'
 
 DATA_PATH = f'{project_dir}/data'
 MOS_PATH = f'{DATA_PATH}/mos.csv'
-IMG_DIRPATH = f'{DATA_PATH}/images/train'
+IMG_DIRPATH = f'{DATA_PATH}/images/test'
 
 HEIGHT = None
 WIDTH = None
 IS_CATEGORICAL = None
 
 TEST_BATCH_SIZE = 1
-LIMIT = 20
-PRINT_LIMIT = 20
+LIMIT = None
+PRINT_LIMIT = 10
 
 def load_image(path, label):
-    image = images.load_image(path, HEIGHT, WIDTH)
+    image = images.load_image(path, HEIGHT, WIDTH, False)
     return image, label
 
 def main():
@@ -71,12 +72,17 @@ def main():
     else:
         predictions = model.predict(dataset).flatten()
         mae = np.abs(predictions - mos)
-
-        for i in range(min(PRINT_LIMIT, len(predictions))):
-            print(f"{predictions[i]:.1f} {mos[i]:.1f} {mae[i]:.2f}")
         
         print(f"mae: {np.mean(mae)}")
-        print(f"highest mae: {np.max(mae)}")
+        print(f"highest error: {np.max(mae)}")
+        
+        merged = np.stack((predictions, mos, mae, img_paths), axis=-1)
+        indices = np.argsort(merged[:, 2].astype(float))[::-1]
+        merged = merged[indices]
+
+        print(f"Top {PRINT_LIMIT} predictions with highest error:")
+        for i in range(PRINT_LIMIT):
+            print(f"{i+1}. {float(merged[i,0]):.3f} for {float(merged[i,1]):.3f} (error {float(merged[i,2]):.4f}): {merged[i,3]}")
 
 if __name__ == '__main__':
     main()
