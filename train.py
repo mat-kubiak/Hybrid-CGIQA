@@ -123,7 +123,7 @@ def load_val_image(path, label):
     image = images.load_image(path, HEIGHT, WIDTH, antialias=ANTIALIASING)
     return image, label
 
-def load_fit_image(image, label):
+def load_fit_image(path, label):
     image = images.load_image(path, HEIGHT, WIDTH, augment_with=augment_model, antialias=ANTIALIASING)
     return image, label
 
