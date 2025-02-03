@@ -119,16 +119,12 @@ def initialize_model():
     model.summary()
     log_hparams()
 
-def load_image(path, label):
-    image = images.load_image(path, HEIGHT, WIDTH, ANTIALIASING)
+def load_val_image(path, label):
+    image = images.load_image(path, HEIGHT, WIDTH, antialias=ANTIALIASING)
     return image, label
 
-def augment_image(image, label):
-    if not AUGMENT:
-        return image, label
-
-    image = augment_model(image, training=True)
-    image = tf.clip_by_value(image, 0.0, 1.0)
+def load_fit_image(image, label):
+    image = images.load_image(path, HEIGHT, WIDTH, augment_with=augment_model, antialias=ANTIALIASING)
     return image, label
 
 def main():
@@ -139,21 +135,21 @@ def main():
     tracker = Tracker(log_path=LOG_FILE, status_path=STATUS_FILE)
 
     tracker.logprint("Program starting up...")
-    
+
     initialize_resources()
     initialize_model()
-    augment_model = models.get_augmentation_model()
+
+    augment_model = models.get_augmentation_model() if AUGMENT else None
 
     dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos))
-        .map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-        .map(augment_image, num_parallel_calls=tf.data.AUTOTUNE)
+        .map(load_fit_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         .shuffle(buffer_size=1000)
         .batch(FIT_BATCH_SIZE)
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
 
     val_dataset = (tf.data.Dataset.from_tensor_slices((val_imgs, val_mos))
-        .map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        .map(load_val_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         .batch(VAL_BATCH_SIZE)
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
