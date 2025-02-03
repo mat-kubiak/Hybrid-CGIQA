@@ -142,8 +142,8 @@ def main():
     augment_model = models.get_augmentation_model() if AUGMENT else None
 
     dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos))
-        .map(load_fit_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         .shuffle(buffer_size=1000)
+        .map(load_fit_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         .batch(FIT_BATCH_SIZE)
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
