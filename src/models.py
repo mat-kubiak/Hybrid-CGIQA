@@ -23,12 +23,12 @@ def _squeeze_excite(input_layer, reduction_ratio=6):
 
 def get_augmentation_model():
     model = keras.Sequential([
-        layers.RandomRotation(0.05),
-        layers.RandomTranslation(0.05, 0.05),
-        layers.RandomZoom(0.05),
+        layers.RandomRotation(0.002),
+        layers.RandomTranslation(0.02, 0.02),
+        layers.RandomZoom(0.02),
         
         layers.RandomBrightness(0.02, value_range=(0, 1)),
-        layers.RandomContrast(0.02, value_range=(0, 1)),
+        layers.RandomContrast(0.02),
     ])
 
     return model
@@ -72,10 +72,13 @@ def _hidden_layers(input_layer):
 
     return x
 
-def init_model_continuous(height, width):
+def init_model_continuous(height, width, gaussian=0):
     input_layer = layers.Input(shape=(height, width, 3))
     hidden_layers = _hidden_layers(input_layer)
     output_layer = layers.Dense(units=1, activation='linear')(hidden_layers)
+    
+    if gaussian != 0:
+        output_layer = layers.GaussianNoise(gaussian)(output_layer)
 
     model = keras.Model(inputs=input_layer, outputs=output_layer)
 
@@ -102,10 +105,10 @@ def init_model_categorical(height, width):
 
     return model
 
-def init_model(height, width, is_categorical):
+def init_model(height, width, is_categorical, gaussian=0):
     if is_categorical:
         return init_model_categorical(height, width)
-    return init_model_continuous(height, width)
+    return init_model_continuous(height, width, gaussian=gaussian)
 
 def load_model(path):
     return keras.models.load_model(path)

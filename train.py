@@ -36,6 +36,7 @@ EPOCHS = 50
 IS_CATEGORICAL = False
 ANTIALIASING = False
 AUGMENT = False
+GAUSSIAN_NOISE = 0
 
 # if set, limits data to n first samples
 FIT_LIMIT = None
@@ -96,6 +97,7 @@ def log_hparams():
         'optimizer': model.optimizer.__class__.__name__,
         'trainable_params': model.count_params(),
         'loss': model.loss.__class__.__name__,
+        'label-noise': GAUSSIAN_NOISE,
     }
 
     print(hparams)
@@ -112,7 +114,7 @@ def initialize_model():
         tracker.logprint(f"Loaded model from file")
     
     except Exception as e:
-        model = models.init_model(HEIGHT, WIDTH, IS_CATEGORICAL)
+        model = models.init_model(HEIGHT, WIDTH, IS_CATEGORICAL, gaussian=GAUSSIAN_NOISE)
         tf.keras.utils.plot_model(model, to_file=f"{OUTPUT_DIR}/arch.png", show_shapes=True, show_dtype=True, show_layer_names=True)
         tracker.logprint(f"Initialized new model")
     
