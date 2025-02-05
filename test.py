@@ -2,29 +2,30 @@ import os
 import sys
 import tensorflow as tf
 import numpy as np
+import matplotlib.pyplot as plt
 
-project_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(f'{project_dir}/src')
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(f'{PROJECT_DIR}/src')
 
 import images, labels, models
 
-MODEL_NAME = ''
-MODEL_PATH = f'{project_dir}/output/{MODEL_NAME}/model.keras'
+MODEL_PATH = f'{PROJECT_DIR}/output/model.keras'
 
-DATA_PATH = f'{project_dir}/data'
+DATA_PATH = f'{PROJECT_DIR}/data'
 MOS_PATH = f'{DATA_PATH}/mos.csv'
 IMG_DIRPATH = f'{DATA_PATH}/images/test'
 
 HEIGHT = None
 WIDTH = None
 IS_CATEGORICAL = None
+ANTIALIAS = False
 
-TEST_BATCH_SIZE = 1
+TEST_BATCH_SIZE = 10
 LIMIT = None
 PRINT_LIMIT = 10
 
 def load_image(path, label):
-    image = images.load_image(path, HEIGHT, WIDTH, False)
+    image = images.load_image(path, HEIGHT, WIDTH, antialias=ANTIALIAS)
     return image, label
 
 def main():
@@ -83,6 +84,13 @@ def main():
         print(f"Top {PRINT_LIMIT} predictions with highest error:")
         for i in range(PRINT_LIMIT):
             print(f"{i+1}. {float(merged[i,0]):.3f} for {float(merged[i,1]):.3f} (error {float(merged[i,2]):.4f}): {merged[i,3]}")
+        
+        # histogram
+        plt.hist(mae, bins=100)
+        plt.xlabel('Value')
+        plt.ylabel('Frequency')
+        plt.title('Histogram')
+        plt.show()
 
 if __name__ == '__main__':
     main()
