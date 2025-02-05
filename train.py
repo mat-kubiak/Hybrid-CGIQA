@@ -37,6 +37,7 @@ IS_CATEGORICAL = False
 ANTIALIASING = False
 AUGMENT = False
 GAUSSIAN_NOISE = 0
+WEIGHT_SAMPLING = 0
 
 # if set, limits data to n first samples
 FIT_LIMIT = None
@@ -98,6 +99,7 @@ def log_hparams():
         'trainable_params': model.count_params(),
         'loss': model.loss.__class__.__name__,
         'label-noise': GAUSSIAN_NOISE,
+        'weight-sampling': WEIGHT_SAMPLING
     }
 
     print(hparams)
@@ -125,9 +127,9 @@ def load_val_image(path, label):
     image = images.load_image(path, HEIGHT, WIDTH, antialias=ANTIALIASING)
     return image, label
 
-def load_fit_image(path, label):
+def load_fit_image(path, label, weight):
     image = images.load_image(path, HEIGHT, WIDTH, augment_with=augment_model, antialias=ANTIALIASING)
-    return image, label
+    return image, label, weight
 
 def main():
     global model, tracker, augment_model
@@ -143,7 +145,12 @@ def main():
 
     augment_model = models.get_augmentation_model() if AUGMENT else None
 
-    dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos))
+    if WEIGHT_SAMPLING != 0:
+        sample_weights = models.get_sample_weights(fit_mos, power=WEIGHT_SAMPLING)
+    else:
+        sample_weights = np.ones(fit_mos.shape, dtype=np.float32)
+
+    dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos, sample_weights))
         .shuffle(buffer_size=1000)
         .map(load_fit_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         .batch(FIT_BATCH_SIZE)

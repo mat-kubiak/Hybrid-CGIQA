@@ -33,6 +33,17 @@ def get_augmentation_model():
 
     return model
 
+def get_sample_weights(labels, power=1.0):
+    mean = tf.reduce_mean(labels)
+    std = tf.math.reduce_std(labels)
+    
+    z_scores = tf.abs(labels - mean) / std
+    
+    weights = 1.0 + tf.pow(z_scores, power)
+    
+    weights = weights / tf.reduce_mean(weights)
+    return weights
+
 def _hidden_layers(input_layer):
     
     # hist route
@@ -85,6 +96,7 @@ def init_model_continuous(height, width, gaussian=0):
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=1e-4),
         loss=keras.losses.MeanSquaredError(),
+        # loss=keras.losses.Huber(delta=0.1),
         metrics=[keras.metrics.MeanAbsoluteError()]
     )
 
