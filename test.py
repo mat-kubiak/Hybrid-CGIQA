@@ -90,7 +90,7 @@ def main():
         plt.xlabel('Value')
         plt.ylabel('Frequency')
         plt.title('Histogram')
-        plt.show()
+        plt.savefig('histogram.png')
 
 if __name__ == '__main__':
     main()
