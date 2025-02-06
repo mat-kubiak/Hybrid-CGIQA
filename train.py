@@ -1,4 +1,4 @@
-import os, sys, time, signal, math, datetime
+import os, sys, time, signal, math, datetime, random
 import tensorflow as tf
 import numpy as np
 from tensorboard.plugins.hparams import api as hp
@@ -51,6 +51,11 @@ fit_imgs = None
 val_mos = None
 val_imgs = None
 batches_per_epoch = None
+
+SEED = 23478
+tf.random.set_seed(SEED)
+np.random.seed(SEED)
+random.seed(SEED)
 
 def signal_handler(sig, frame):
     tracker.logprint(f"Received signal {sig}")
@@ -116,7 +121,7 @@ def initialize_model():
         tracker.logprint(f"Loaded model from file")
     
     except Exception as e:
-        model = models.init_model(HEIGHT, WIDTH, IS_CATEGORICAL, gaussian=GAUSSIAN_NOISE)
+        model = models.init_model(HEIGHT, WIDTH, IS_CATEGORICAL, SEED, gaussian=GAUSSIAN_NOISE)
         tf.keras.utils.plot_model(model, to_file=f"{OUTPUT_DIR}/arch.png", show_shapes=True, show_dtype=True, show_layer_names=True)
         tracker.logprint(f"Initialized new model")
     

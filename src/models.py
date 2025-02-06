@@ -49,9 +49,9 @@ def LightInceptionModule(x, filters_1x1, filters_3x3, filters_5x5):
     conv1x1 = layers.Conv2D(filters_1x1, (1,1), padding='same', activation='relu')(x)
     
     conv3x3 = layers.Conv2D(filters_3x3, (3,3), padding='same', activation='relu')(x)
-    
+
     conv5x5 = layers.Conv2D(filters_5x5, (5,5), padding='same', activation='relu')(x)
-    
+
     pool = layers.MaxPooling2D((3,3), strides=(1,1), padding='same')(x)
     pool_proj = layers.Conv2D(filters_1x1, (1,1), padding='same', activation='relu')(pool)
     
@@ -71,14 +71,14 @@ def _spp(x):
     x = layers.Concatenate()([spp_1, spp_2, spp_4, spp_8])
     return x
 
-def _hidden_layers(input_layer):
+def _hidden_layers(input_layer, seed):
     
     # hist route
     h = RGBToHSV()(input_layer)
     h = NormalizedHistogram(nbins=256)(h)
     h = layers.Flatten()(h)
     h = layers.Dense(units=512, activation='relu', kernel_regularizer=l2(1e-4))(h)
-    h = layers.Dropout(0.4)(h)
+    h = layers.Dropout(0.4, seed=seed)(h)
 
     # conv route
     c = layers.Conv2D(16, (7,7), strides=(2,2), padding='same', activation='relu')(input_layer)
@@ -90,19 +90,19 @@ def _hidden_layers(input_layer):
     
     c = _spp(c)
     c = layers.Dense(units=256, activation="relu", kernel_regularizer=l2(1e-4))(c)
-    c = layers.Dropout(0.4)(c)
+    c = layers.Dropout(0.4, seed=seed)(c)
 
     # merge
     x = layers.Concatenate()([h, c])
     x = layers.Dense(units=256, activation="relu", kernel_regularizer=l2(1e-4))(x)
     x = layers.Dense(units=256, activation="relu", kernel_regularizer=l2(1e-4))(x)
-    x = layers.Dropout(0.4)(x)
+    x = layers.Dropout(0.4, seed=seed)(x)
 
     return x
 
-def init_model_continuous(height, width, gaussian=0):
+def init_model_continuous(height, width, seed, gaussian=0):
     input_layer = layers.Input(shape=(height, width, 3))
-    hidden_layers = _hidden_layers(input_layer)
+    hidden_layers = _hidden_layers(input_layer, seed)
     output_layer = layers.Dense(units=1, activation='linear')(hidden_layers)
     
     if gaussian != 0:
@@ -120,9 +120,9 @@ def init_model_continuous(height, width, gaussian=0):
 
     return model
 
-def init_model_categorical(height, width):
+def init_model_categorical(height, width, seed):
     input_layer = layers.Input(shape=(height, width, 3))
-    hidden_layers = _hidden_layers(input_layer)
+    hidden_layers = _hidden_layers(input_layer, seed)
     output_layer = layers.Dense(units=41, activation='softmax')(hidden_layers)
 
     model = keras.Model(inputs=input_layer, outputs=output_layer)
@@ -135,10 +135,10 @@ def init_model_categorical(height, width):
 
     return model
 
-def init_model(height, width, is_categorical, gaussian=0):
+def init_model(height, width, is_categorical, seed, gaussian=0):
     if is_categorical:
-        return init_model_categorical(height, width)
-    return init_model_continuous(height, width, gaussian=gaussian)
+        return init_model_categorical(height, width, seed)
+    return init_model_continuous(height, width, seed, gaussian=gaussian)
 
 def load_model(path):
     return keras.models.load_model(path)
