@@ -81,7 +81,7 @@ def _hidden_layers(input_layer):
     h = RGBToHSV()(input_layer)
     h = NormalizedHistogram(nbins=256)(h)
     h = layers.Flatten()(h)
-    h = layers.Dense(units=512, activation='relu', kernel_regularizer=l2(1e-4))(h)
+    h = layers.Dense(units=256, activation='relu', kernel_regularizer=l2(1e-4))(h)
     h = layers.Dropout(0.4, seed=SEED)(h)
 
     # conv route
@@ -93,13 +93,13 @@ def _hidden_layers(input_layer):
     c = layers.MaxPooling2D((3,3), strides=(2,2), padding='same')(c)
     
     c = _spp(c)
-    c = layers.Dense(units=256, activation="relu", kernel_regularizer=l2(1e-4))(c)
+    c = layers.Dense(units=128, activation="relu", kernel_regularizer=l2(1e-4))(c)
     c = layers.Dropout(0.4, seed=SEED)(c)
 
     # merge
     x = layers.Concatenate()([h, c])
-    x = layers.Dense(units=256, activation="relu", kernel_regularizer=l2(1e-4))(x)
-    x = layers.Dense(units=256, activation="relu", kernel_regularizer=l2(1e-4))(x)
+    x = layers.Dense(units=128, activation="relu", kernel_regularizer=l2(1e-4))(x)
+    x = layers.Dense(units=128, activation="relu", kernel_regularizer=l2(1e-4))(x)
     x = layers.Dropout(0.4, seed=SEED)(x)
 
     return x
