@@ -2,6 +2,7 @@ import os
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+from tensorflow.keras.regularizers import l2
 
 from histogram import NormalizedHistogram
 from attention import SpatialAttention
@@ -50,35 +51,34 @@ def _hidden_layers(input_layer):
     h = RGBToHSV()(input_layer)
     h = NormalizedHistogram(nbins=256)(h)
     h = layers.Flatten()(h)
-    h = layers.Dense(units=512, activation='relu')(h)
+    h = layers.Dense(units=512, activation='relu', kernel_regularizer=l2(1e-4))(h)
     h = layers.Dropout(0.4)(h)
 
     # conv route
-    c = layers.Conv2D(kernel_size=(3,3), filters=32)(input_layer)
-    c = layers.Conv2D(kernel_size=(3,3), filters=32)(c)
+    c = layers.Conv2D(kernel_size=(3,3), filters=32, kernel_regularizer=l2(1e-5))(input_layer)
+    c = layers.Conv2D(kernel_size=(3,3), filters=32, kernel_regularizer=l2(1e-5))(c)
     c = SpatialAttention()(c)
     c = layers.AveragePooling2D(pool_size=(3,3))(c)
-    
-    c = layers.Conv2D(kernel_size=(3,3), filters=64)(c)
-    c = layers.Conv2D(kernel_size=(3,3), filters=64)(c)
-    c = SpatialAttention()(c)
-    c = layers.AveragePooling2D(pool_size=(3,3))(c)
-
-    c = layers.Conv2D(kernel_size=(3,3), filters=128)(c)
-    c = layers.Conv2D(kernel_size=(3,3), filters=128)(c)
+    c = layers.Conv2D(kernel_size=(3,3), filters=64, kernel_regularizer=l2(1e-5))(c)
+    c = layers.Conv2D(kernel_size=(3,3), filters=64, kernel_regularizer=l2(1e-5))(c)
     c = SpatialAttention()(c)
     c = layers.AveragePooling2D(pool_size=(3,3))(c)
 
-    c = layers.Conv2D(kernel_size=(1,1), filters=1, activation="linear")(c)
+    c = layers.Conv2D(kernel_size=(3,3), filters=128, kernel_regularizer=l2(1e-5))(c)
+    c = layers.Conv2D(kernel_size=(3,3), filters=128, kernel_regularizer=l2(1e-5))(c)
+    c = SpatialAttention()(c)
+    c = layers.AveragePooling2D(pool_size=(3,3))(c)
+
+    c = layers.Conv2D(kernel_size=(1,1), filters=1, activation="linear", kernel_regularizer=l2(1e-5))(c)
     c = layers.Flatten()(c)
 
-    c = layers.Dense(units=512, activation="relu")(c)
+    c = layers.Dense(units=512, activation="relu", kernel_regularizer=l2(1e-4))(c)
     c = layers.Dropout(0.4)(c)
 
     # merge
     x = layers.Concatenate()([h, c])
-    x = layers.Dense(units=512, activation="relu")(x)
-    x = layers.Dense(units=256, activation="relu")(x)
+    x = layers.Dense(units=512, activation="relu", kernel_regularizer=l2(1e-4))(x)
+    x = layers.Dense(units=256, activation="relu", kernel_regularizer=l2(1e-4))(x)
     x = layers.Dropout(0.4)(x)
 
     return x
@@ -97,6 +97,7 @@ def init_model_continuous(height, width, gaussian=0):
         optimizer=keras.optimizers.Adam(learning_rate=1e-4),
         loss=keras.losses.MeanSquaredError(),
         # loss=keras.losses.Huber(delta=0.1),
+        # loss=keras.losses.MeanAbsoluteError(),
         metrics=[keras.metrics.MeanAbsoluteError()]
     )
 
