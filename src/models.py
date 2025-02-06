@@ -1,4 +1,4 @@
-import os
+import random
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -8,6 +8,10 @@ from histogram import NormalizedHistogram
 from attention import SpatialAttention
 from ordinalcrossentropy import OrdinalCrossentropy
 from rgbtohsv import RGBToHSV
+
+SEED = 23478
+tf.random.set_seed(SEED)
+random.seed(SEED)
 
 def _squeeze_excite(input_layer, reduction_ratio=6):
     squeeze = layers.GlobalAveragePooling2D()(input_layer)
@@ -71,7 +75,7 @@ def _spp(x):
     x = layers.Concatenate()([spp_1, spp_2, spp_4, spp_8])
     return x
 
-def _hidden_layers(input_layer, seed):
+def _hidden_layers(input_layer):
     
     # hist route
     h = RGBToHSV()(input_layer)
@@ -100,9 +104,9 @@ def _hidden_layers(input_layer, seed):
 
     return x
 
-def init_model_continuous(height, width, seed, gaussian=0):
+def init_model_continuous(height, width, gaussian=0):
     input_layer = layers.Input(shape=(height, width, 3))
-    hidden_layers = _hidden_layers(input_layer, seed)
+    hidden_layers = _hidden_layers(input_layer)
     output_layer = layers.Dense(units=1, activation='linear')(hidden_layers)
     
     if gaussian != 0:
@@ -120,9 +124,9 @@ def init_model_continuous(height, width, seed, gaussian=0):
 
     return model
 
-def init_model_categorical(height, width, seed):
+def init_model_categorical(height, width):
     input_layer = layers.Input(shape=(height, width, 3))
-    hidden_layers = _hidden_layers(input_layer, seed)
+    hidden_layers = _hidden_layers(input_layer)
     output_layer = layers.Dense(units=41, activation='softmax')(hidden_layers)
 
     model = keras.Model(inputs=input_layer, outputs=output_layer)
@@ -135,10 +139,10 @@ def init_model_categorical(height, width, seed):
 
     return model
 
-def init_model(height, width, is_categorical, seed, gaussian=0):
+def init_model(height, width, is_categorical, gaussian=0):
     if is_categorical:
-        return init_model_categorical(height, width, seed)
-    return init_model_continuous(height, width, seed, gaussian=gaussian)
+        return init_model_categorical(height, width)
+    return init_model_continuous(height, width, gaussian=gaussian)
 
 def load_model(path):
     return keras.models.load_model(path)

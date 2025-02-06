@@ -121,7 +121,7 @@ def initialize_model():
         tracker.logprint(f"Loaded model from file")
     
     except Exception as e:
-        model = models.init_model(HEIGHT, WIDTH, IS_CATEGORICAL, SEED, gaussian=GAUSSIAN_NOISE)
+        model = models.init_model(HEIGHT, WIDTH, IS_CATEGORICAL, gaussian=GAUSSIAN_NOISE)
         tf.keras.utils.plot_model(model, to_file=f"{OUTPUT_DIR}/arch.png", show_shapes=True, show_dtype=True, show_layer_names=True)
         tracker.logprint(f"Initialized new model")
     
