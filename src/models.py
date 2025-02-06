@@ -82,7 +82,7 @@ def _hidden_layers(input_layer):
     h = NormalizedHistogram(nbins=256)(h)
     h = layers.Flatten()(h)
     h = layers.Dense(units=512, activation='relu', kernel_regularizer=l2(1e-4))(h)
-    h = layers.Dropout(0.4, seed=seed)(h)
+    h = layers.Dropout(0.4, seed=SEED)(h)
 
     # conv route
     c = layers.Conv2D(16, (7,7), strides=(2,2), padding='same', activation='relu')(input_layer)
@@ -94,13 +94,13 @@ def _hidden_layers(input_layer):
     
     c = _spp(c)
     c = layers.Dense(units=256, activation="relu", kernel_regularizer=l2(1e-4))(c)
-    c = layers.Dropout(0.4, seed=seed)(c)
+    c = layers.Dropout(0.4, seed=SEED)(c)
 
     # merge
     x = layers.Concatenate()([h, c])
     x = layers.Dense(units=256, activation="relu", kernel_regularizer=l2(1e-4))(x)
     x = layers.Dense(units=256, activation="relu", kernel_regularizer=l2(1e-4))(x)
-    x = layers.Dropout(0.4, seed=seed)(x)
+    x = layers.Dropout(0.4, seed=SEED)(x)
 
     return x
 
