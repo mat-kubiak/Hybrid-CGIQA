@@ -28,8 +28,8 @@ STATUS_FILE = f'{OUTPUT_DIR}/status.ini'
 MODEL_FILE = f'{OUTPUT_DIR}/model.keras'
 BACKUP_FILE = f'{OUTPUT_DIR}/backup.keras'
 
-HEIGHT = 512
-WIDTH = 512
+HEIGHT = None
+WIDTH = None
 FIT_BATCH_SIZE = 20
 VAL_BATCH_SIZE = 20
 EPOCHS = 50
@@ -121,7 +121,7 @@ def initialize_model():
         tracker.logprint(f"Loaded model from file")
     
     except Exception as e:
-        model = models.init_model(HEIGHT, WIDTH, IS_CATEGORICAL, gaussian=GAUSSIAN_NOISE)
+        model = models.init_model(None, None, IS_CATEGORICAL, gaussian=GAUSSIAN_NOISE)
         tf.keras.utils.plot_model(model, to_file=f"{OUTPUT_DIR}/arch.png", show_shapes=True, show_dtype=True, show_layer_names=True)
         tracker.logprint(f"Initialized new model")
     
@@ -158,13 +158,17 @@ def main():
     dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos, sample_weights))
         .shuffle(buffer_size=1000)
         .map(load_fit_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-        .batch(FIT_BATCH_SIZE)
+        .padded_batch(FIT_BATCH_SIZE, 
+            padded_shapes=([None, None, 3], [], []),
+            padding_values=(0.0, 0.0, 1.0))
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
 
     val_dataset = (tf.data.Dataset.from_tensor_slices((val_imgs, val_mos))
         .map(load_val_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-        .batch(VAL_BATCH_SIZE)
+        .padded_batch(VAL_BATCH_SIZE,
+            padded_shapes=([None, None, 3], []), 
+            padding_values=(0.0, 0.0))
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
 

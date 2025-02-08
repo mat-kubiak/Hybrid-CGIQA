@@ -8,6 +8,7 @@ from histogram import NormalizedHistogram
 from attention import SpatialAttention
 from ordinalcrossentropy import OrdinalCrossentropy
 from rgbtohsv import RGBToHSV
+from adaptivepooling import AdaptiveAveragePooling2D
 
 SEED = 23478
 tf.random.set_seed(SEED)
@@ -62,11 +63,11 @@ def LightInceptionModule(x, filters_1x1, filters_3x3, filters_5x5):
     return layers.Concatenate(axis=-1)([conv1x1, conv3x3, conv5x5, pool_proj])
 
 def _spp(x):
-    spp_1 = layers.AveragePooling2D(pool_size=(x.shape[1], x.shape[2]))(x)
-    spp_2 = layers.AveragePooling2D(pool_size=(x.shape[1]//2, x.shape[2]//2), strides=(x.shape[1]//2, x.shape[2]//2))(x)
-    spp_4 = layers.AveragePooling2D(pool_size=(x.shape[1]//4, x.shape[2]//4), strides=(x.shape[1]//4, x.shape[2]//4))(x)
-    spp_8 = layers.AveragePooling2D(pool_size=(x.shape[1]//8, x.shape[2]//8), strides=(x.shape[1]//8, x.shape[2]//8))(x)
-    
+    spp_1 = AdaptiveAveragePooling2D(grid_size=1)(x)
+    spp_2 = AdaptiveAveragePooling2D(grid_size=2)(x)
+    spp_4 = AdaptiveAveragePooling2D(grid_size=4)(x)
+    spp_8 = AdaptiveAveragePooling2D(grid_size=8)(x)
+
     spp_1 = layers.Flatten()(spp_1)
     spp_2 = layers.Flatten()(spp_2)
     spp_4 = layers.Flatten()(spp_4)
