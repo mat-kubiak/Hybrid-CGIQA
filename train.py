@@ -129,7 +129,7 @@ def initialize_model():
     log_hparams()
 
 def load_val_image(path, label):
-    image = images.load_image(path, HEIGHT, WIDTH, antialias=ANTIALIASING)
+    image = images.load_image(path, None, None)
     return image, label
 
 def load_fit_image(path, label, weight):
