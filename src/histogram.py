@@ -27,12 +27,14 @@ class NormalizedHistogram(tf.keras.layers.Layer):
 
         def op_per_channel(channel):
             flattened = tf.reshape(channel, [-1])
-            
+
             hist = _compute_histogram(flattened, value_range=[0.0, 1.0], nbins=self.nbins + 1)
             hist = tf.cast(hist, tf.float32)
             hist = hist[1:]  # Remove the first bin to remove impact of zero-padding
-            hist = hist / tf.reduce_sum(hist)
-            return hist
+
+            # prevent div by 0 when channel is empty
+            denom = tf.maximum(tf.reduce_sum(hist), tf.keras.backend.epsilon())
+            return hist / denom
 
         def op_per_image(image):
             channels_first = tf.transpose(image, perm=[2, 0, 1])
@@ -45,7 +47,7 @@ class NormalizedHistogram(tf.keras.layers.Layer):
     def compute_output_shape(self, input_shape):
         samples, height, width, channels = input_shape
         return (samples, self.nbins, channels)
-    
+
     def get_config(self):
         config = super().get_config()
         config.update({"nbins": self.nbins, 'trainable': False})
