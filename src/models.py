@@ -51,14 +51,14 @@ def get_sample_weights(labels, power=1.0):
     return weights
 
 def LightInceptionModule(x, filters_1x1, filters_3x3, filters_5x5):
-    conv1x1 = layers.Conv2D(filters_1x1, (1,1), padding='same', activation='relu')(x)
+    conv1x1 = layers.Conv2D(filters_1x1, (1,1), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(x)
     
-    conv3x3 = layers.Conv2D(filters_3x3, (3,3), padding='same', activation='relu')(x)
+    conv3x3 = layers.Conv2D(filters_3x3, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(x)
 
-    conv5x5 = layers.Conv2D(filters_5x5, (5,5), padding='same', activation='relu')(x)
+    conv5x5 = layers.Conv2D(filters_5x5, (5,5), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(x)
 
     pool = layers.MaxPooling2D((3,3), strides=(1,1), padding='same')(x)
-    pool_proj = layers.Conv2D(filters_1x1, (1,1), padding='same', activation='relu')(pool)
+    pool_proj = layers.Conv2D(filters_1x1, (1,1), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(pool)
     
     return layers.Concatenate(axis=-1)([conv1x1, conv3x3, conv5x5, pool_proj])
 
