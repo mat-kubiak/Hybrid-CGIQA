@@ -1,4 +1,4 @@
-import os
+import random
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -8,6 +8,11 @@ from histogram import NormalizedHistogram
 from attention import SpatialAttention
 from ordinalcrossentropy import OrdinalCrossentropy
 from rgbtohsv import RGBToHSV
+from adaptivepooling import AdaptiveAveragePooling2D
+
+SEED = 23478
+tf.random.set_seed(SEED)
+random.seed(SEED)
 
 def _squeeze_excite(input_layer, reduction_ratio=6):
     squeeze = layers.GlobalAveragePooling2D()(input_layer)
@@ -45,41 +50,58 @@ def get_sample_weights(labels, power=1.0):
     weights = weights / tf.reduce_mean(weights)
     return weights
 
+def LightInceptionModule(x, filters_1x1, filters_3x3, filters_5x5):
+    conv1x1 = layers.Conv2D(filters_1x1, (1,1), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(x)
+    
+    conv3x3 = layers.Conv2D(filters_3x3, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(x)
+
+    conv5x5 = layers.Conv2D(filters_5x5, (5,5), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(x)
+
+    pool = layers.MaxPooling2D((3,3), strides=(1,1), padding='same')(x)
+    pool_proj = layers.Conv2D(filters_1x1, (1,1), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(pool)
+    
+    return layers.Concatenate(axis=-1)([conv1x1, conv3x3, conv5x5, pool_proj])
+
+def _spp(x):
+    spp_1 = AdaptiveAveragePooling2D(grid_size=1)(x)
+    spp_2 = AdaptiveAveragePooling2D(grid_size=2)(x)
+    spp_4 = AdaptiveAveragePooling2D(grid_size=4)(x)
+    spp_8 = AdaptiveAveragePooling2D(grid_size=8)(x)
+
+    spp_1 = layers.Flatten()(spp_1)
+    spp_2 = layers.Flatten()(spp_2)
+    spp_4 = layers.Flatten()(spp_4)
+    spp_8 = layers.Flatten()(spp_8)
+    
+    x = layers.Concatenate()([spp_1, spp_2, spp_4, spp_8])
+    return x
+
 def _hidden_layers(input_layer):
     
     # hist route
     h = RGBToHSV()(input_layer)
     h = NormalizedHistogram(nbins=256)(h)
     h = layers.Flatten()(h)
-    h = layers.Dense(units=512, activation='relu', kernel_regularizer=l2(1e-4))(h)
-    h = layers.Dropout(0.4)(h)
+    h = layers.Dense(units=256, activation='relu', kernel_regularizer=l2(1e-4))(h)
+    h = layers.Dropout(0.4, seed=SEED)(h)
 
     # conv route
-    c = layers.Conv2D(kernel_size=(3,3), filters=32, kernel_regularizer=l2(1e-5))(input_layer)
-    c = layers.Conv2D(kernel_size=(3,3), filters=32, kernel_regularizer=l2(1e-5))(c)
-    c = SpatialAttention()(c)
-    c = layers.AveragePooling2D(pool_size=(3,3))(c)
-    c = layers.Conv2D(kernel_size=(3,3), filters=64, kernel_regularizer=l2(1e-5))(c)
-    c = layers.Conv2D(kernel_size=(3,3), filters=64, kernel_regularizer=l2(1e-5))(c)
-    c = SpatialAttention()(c)
-    c = layers.AveragePooling2D(pool_size=(3,3))(c)
-
-    c = layers.Conv2D(kernel_size=(3,3), filters=128, kernel_regularizer=l2(1e-5))(c)
-    c = layers.Conv2D(kernel_size=(3,3), filters=128, kernel_regularizer=l2(1e-5))(c)
-    c = SpatialAttention()(c)
-    c = layers.AveragePooling2D(pool_size=(3,3))(c)
-
-    c = layers.Conv2D(kernel_size=(1,1), filters=1, activation="linear", kernel_regularizer=l2(1e-5))(c)
-    c = layers.Flatten()(c)
-
-    c = layers.Dense(units=512, activation="relu", kernel_regularizer=l2(1e-4))(c)
-    c = layers.Dropout(0.4)(c)
+    c = layers.Conv2D(16, (7,7), strides=(2,2), padding='same', activation='relu')(input_layer)
+    c = layers.MaxPooling2D((3,3), strides=(2,2), padding='same')(c)
+    
+    c = LightInceptionModule(c, 8, 16, 8)
+    c = LightInceptionModule(c, 16, 24, 16)
+    c = layers.MaxPooling2D((3,3), strides=(2,2), padding='same')(c)
+    
+    c = _spp(c)
+    c = layers.Dense(units=128, activation="relu", kernel_regularizer=l2(1e-4))(c)
+    c = layers.Dropout(0.4, seed=SEED)(c)
 
     # merge
     x = layers.Concatenate()([h, c])
-    x = layers.Dense(units=512, activation="relu", kernel_regularizer=l2(1e-4))(x)
-    x = layers.Dense(units=256, activation="relu", kernel_regularizer=l2(1e-4))(x)
-    x = layers.Dropout(0.4)(x)
+    x = layers.Dense(units=128, activation="relu", kernel_regularizer=l2(1e-4))(x)
+    x = layers.Dense(units=128, activation="relu", kernel_regularizer=l2(1e-4))(x)
+    x = layers.Dropout(0.4, seed=SEED)(x)
 
     return x
 

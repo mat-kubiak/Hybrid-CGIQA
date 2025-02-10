@@ -1,20 +1,18 @@
 import tensorflow as tf
 
-# XLA-compatible impl of tf.histogram_fixed_width()
 def _compute_histogram(values, value_range, nbins=256):
+    """XLA-compatible impl of tf.histogram_fixed_width()"""
+
     min_val, max_val = value_range
     
-    # Prevent division by zero
     bin_width = tf.maximum(
         (max_val - min_val) / tf.cast(nbins, values.dtype), 
         tf.keras.backend.epsilon()
     )
     
-    # Compute bin indices
     bins = tf.floor((values - min_val) / bin_width)
     bins = tf.cast(tf.clip_by_value(bins, 0, nbins - 1), tf.int32)
     
-    # One-hot encode and sum
     encoded = tf.one_hot(bins, depth=nbins, dtype=tf.int32)
     histogram = tf.reduce_sum(encoded, axis=0)
     
@@ -26,31 +24,30 @@ class NormalizedHistogram(tf.keras.layers.Layer):
         self.nbins = nbins
 
     def call(self, inputs):
-        
+
+        def op_per_channel(channel):
+            flattened = tf.reshape(channel, [-1])
+
+            hist = _compute_histogram(flattened, value_range=[0.0, 1.0], nbins=self.nbins + 1)
+            hist = tf.cast(hist, tf.float32)
+            hist = hist[1:]  # Remove the first bin to remove impact of zero-padding
+
+            # prevent div by 0 when channel is empty
+            denom = tf.maximum(tf.reduce_sum(hist), tf.keras.backend.epsilon())
+            return hist / denom
+
         def op_per_image(image):
-            histograms = []
-            for c in range(3):
-                channel = image[..., c]
-                channel = tf.reshape(channel, [-1])
+            channels_first = tf.transpose(image, perm=[2, 0, 1])
+            histograms = tf.map_fn(op_per_channel, channels_first, dtype=tf.float32)
+            return tf.transpose(histograms, perm=[1, 0])
 
-                hist = _compute_histogram(channel, value_range=[0.0, 1.0], nbins=self.nbins+1)
-                hist = tf.cast(hist, tf.float32)
-                hist = hist[1:] # remove first bin to remove impact of zero-padding
-                hist = hist / tf.reduce_sum(hist)
-
-                histograms.append(hist)
-
-            histograms = tf.stack(histograms, axis=-1)
-            return histograms
-        
-        histograms = tf.map_fn(op_per_image, inputs)
+        histograms = tf.map_fn(op_per_image, inputs, dtype=tf.float32)
         return histograms
 
     def compute_output_shape(self, input_shape):
-        # input: (None, h, w, 3)
-        # output: (None, 256, 3)
-        return (None, self.nbins, 3)
-    
+        samples, height, width, channels = input_shape
+        return (samples, self.nbins, channels)
+
     def get_config(self):
         config = super().get_config()
         config.update({"nbins": self.nbins, 'trainable': False})

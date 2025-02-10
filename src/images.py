@@ -11,7 +11,8 @@ def load_image(path, height, width, augment_with=None, antialias=False):
         image = augment_with(image)
         image = tf.clip_by_value(image, 0.0, 1.0)
 
-    image = tf.image.resize_with_pad(image, height, width, method=tf.image.ResizeMethod.BILINEAR, antialias=antialias)
+    if height != None and width != None:
+        image = tf.image.resize_with_pad(image, height, width, method=tf.image.ResizeMethod.BILINEAR, antialias=antialias)
     
     return image
 
