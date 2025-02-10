@@ -8,8 +8,16 @@ sys.path.append(f'{project_dir}/src')
 
 import models
 
+MODEL_PATH = f''
+
+HEIGHT = 512
+WIDTH = 512
+
 def main():
-    model = models.init_model_continuous(512, 512)
+    if len(MODEL_PATH) != 0:
+        model = models.load_model(MODEL_PATH)
+    else:
+        model = models.init_model_continuous(HEIGHT, WIDTH)
 
     plot_model(model, to_file="arch.png", show_shapes=True, show_dtype=True, show_layer_names=True, show_trainable=True)
 
@@ -20,7 +28,8 @@ def main():
     print(f"Input shape {model.input_shape}")
     print(f"Output shape {model.compute_output_shape(model.input_shape)}")
 
-    # print(f"\nlayers: {model.to_json(indent=2)}")
+    layer_cfg = [filter_cfg(layer.get_config()) for layer in model.layers]
+    # print(json.dumps(layer_cfg, indent=2))
 
 if __name__ == '__main__':
     main()
