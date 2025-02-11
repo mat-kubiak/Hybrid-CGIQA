@@ -163,6 +163,10 @@ def _hidden_layers(input_layer):
 
     return x
 
+@keras.utils.register_keras_serializable()
+def emd(y_true, y_pred):
+    return earth_movers_distance(y_true, y_pred)
+
 def init_model_continuous(height, width, gaussian=0):
     input_layer = layers.Input(shape=(height, width, 3))
     hidden_layers = _hidden_layers(input_layer)
@@ -179,7 +183,7 @@ def init_model_continuous(height, width, gaussian=0):
         metrics=[
             keras.metrics.MeanSquaredError(),
             keras.metrics.MeanAbsoluteError(),
-            earth_movers_distance
+            emd
         ]
     )
 
