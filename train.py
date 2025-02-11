@@ -173,7 +173,6 @@ def main():
     )
 
     batch_callback = BatchCallback(tracker, EPOCHS, MODEL_FILE, batches_per_epoch)
-    csv_logger = tf.keras.callbacks.CSVLogger(f"{OUTPUT_DIR}/history.csv", append=True)
 
     tensorboard_callback = tf.keras.callbacks.TensorBoard(
         log_dir=OUTPUT_DIR,
@@ -188,7 +187,7 @@ def main():
         validation_data=val_dataset,
         initial_epoch=tracker.epoch,
         epochs=EPOCHS,
-        callbacks=[batch_callback, csv_logger, tensorboard_callback]
+        callbacks=[batch_callback, tensorboard_callback]
     )
 
     tracker.logprint("Program completed")
