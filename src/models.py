@@ -7,6 +7,7 @@ from tensorflow.keras.regularizers import l2
 from ordinalcrossentropy import OrdinalCrossentropy
 from adaptivepooling import AdaptiveAveragePooling2D
 from nima import load_pretrained_nima
+from vendor.utils.losses import earth_movers_distance
 
 SEED = 23478
 tf.random.set_seed(SEED)
@@ -175,7 +176,11 @@ def init_model_continuous(height, width, gaussian=0):
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=1e-4),
         loss=keras.losses.MeanSquaredError(),
-        metrics=[keras.metrics.MeanAbsoluteError()]
+        metrics=[
+            keras.metrics.MeanSquaredError(),
+            keras.metrics.MeanAbsoluteError(),
+            earth_movers_distance
+        ]
     )
 
     return model
