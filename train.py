@@ -1,4 +1,4 @@
-import os, sys, time, signal, math, datetime, random
+import os, sys, time, signal, math, datetime, random, traceback
 import tensorflow as tf
 import numpy as np
 from tensorboard.plugins.hparams import api as hp
@@ -116,15 +116,24 @@ def log_hparams():
 
 def initialize_model():
     global model
-
-    try:
-        model = models.load_model(MODEL_FILE)
-        tracker.logprint(f"Loaded model from file")
     
-    except Exception as e:
-        model = models.init_model(None, None, IS_CATEGORICAL, gaussian=GAUSSIAN_NOISE)
-        tf.keras.utils.plot_model(model, to_file=f"{OUTPUT_DIR}/arch.png", show_shapes=True, show_dtype=True, show_layer_names=True)
-        tracker.logprint(f"Initialized new model")
+    if os.path.isfile(MODEL_FILE):
+        try:
+            model = models.load_model(MODEL_FILE)
+            tracker.logprint(f"Loaded model from file")
+        except Exception as e:
+            tracker.logprint(f"Fatal error while loading model file at: {MODEL_FILE}")
+            traceback.print_exc()
+            sys.exit(-1)
+    else:
+        try:
+            model = models.init_model(None, None, IS_CATEGORICAL, gaussian=GAUSSIAN_NOISE)
+            tf.keras.utils.plot_model(model, to_file=f"{OUTPUT_DIR}/arch.png", show_shapes=True, show_dtype=True, show_layer_names=True)
+            tracker.logprint(f"Initialized new model")
+        except Exception as e:
+            tracker.logprint(f"Fatal error while initializing model")
+            traceback.print_exc()
+            sys.exit(-1)
     
     model.summary()
     log_hparams()
