@@ -34,6 +34,7 @@ WIDTH = None
 FIT_BATCH_SIZE = 20
 VAL_BATCH_SIZE = 20
 EPOCHS = 50
+FIXED_VAL_IMG_DIMS = True
 IS_CATEGORICAL = False
 ANTIALIASING = False
 AUGMENT = False
@@ -139,7 +140,7 @@ def initialize_model():
     log_hparams()
 
 def load_val_image(path, label):
-    image = images.load_image(path, None, None)
+    image = images.load_image(path, HEIGHT, HEIGHT)
     return image, label
 
 def load_fit_image(path, label, weight):
@@ -174,13 +175,20 @@ def main():
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
 
-    val_dataset = (tf.data.Dataset.from_tensor_slices((val_imgs, val_mos))
-        .map(load_val_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-        .padded_batch(VAL_BATCH_SIZE,
-            padded_shapes=([None, None, 3], []), 
-            padding_values=(0.0, 0.0))
-        .prefetch(tf.data.experimental.AUTOTUNE)
-    )
+    if FIXED_VAL_IMG_DIMS:
+        val_dataset = (tf.data.Dataset.from_tensor_slices((val_imgs, val_mos))
+            .map(load_val_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+            .batch(VAL_BATCH_SIZE)
+            .prefetch(tf.data.experimental.AUTOTUNE)
+        )
+    else:
+        val_dataset = (tf.data.Dataset.from_tensor_slices((val_imgs, val_mos))
+            .map(load_val_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+            .padded_batch(VAL_BATCH_SIZE,
+                padded_shapes=([None, None, 3], []), 
+                padding_values=(0.0, 0.0))
+            .prefetch(tf.data.experimental.AUTOTUNE)
+        )
 
     batch_callback = BatchCallback(tracker, EPOCHS, MODEL_FILE, batches_per_epoch)
     weights_callback = WeightsHistogramCallback(log_dir=OUTPUT_DIR)
