@@ -4,11 +4,9 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.regularizers import l2
 
-from histogram import NormalizedHistogram
-from attention import SpatialAttention
 from ordinalcrossentropy import OrdinalCrossentropy
-from rgbtohsv import RGBToHSV
 from adaptivepooling import AdaptiveAveragePooling2D
+from nima import load_pretrained_nima
 
 SEED = 23478
 tf.random.set_seed(SEED)
@@ -76,32 +74,91 @@ def _spp(x):
     x = layers.Concatenate()([spp_1, spp_2, spp_4, spp_8])
     return x
 
+def channel_attention(input):
+    i_shape = keras.backend.int_shape(input)
+    channels = i_shape[-1]
+
+    d1 = layers.Dense(units=64)
+    d2 = layers.Dense(units=channels)
+
+    pool = (i_shape[1], i_shape[2])
+
+    # avg
+    a = layers.AveragePooling2D(pool_size=pool)(input)
+    a = d1(a)
+    a = d2(a)
+
+    # max
+    m = layers.MaxPooling2D(pool_size=pool)(input)
+    m = d1(m)
+    m = d2(m)
+
+    # final
+    f = layers.Add()([a, m])
+    f = layers.Activation('sigmoid')(f)
+
+    f = layers.Reshape([1, 1, channels])(f)
+    f = layers.Multiply()([f, input])
+    f = layers.AveragePooling2D(pool_size=pool)(f)
+    f = layers.Flatten()(f)
+    return f
+
 def _hidden_layers(input_layer):
+
+    # nima route
+    nima = load_pretrained_nima()
+    nima = keras.Model(inputs=nima.input, outputs=nima.layers[-4].output, name="pretrained_NIMA")
     
-    # hist route
-    h = RGBToHSV()(input_layer)
-    h = NormalizedHistogram(nbins=256)(h)
-    h = layers.Flatten()(h)
-    h = layers.Dense(units=256, activation='relu', kernel_regularizer=l2(1e-4))(h)
-    h = layers.Dropout(0.4, seed=SEED)(h)
+    for layer in nima.layers:
+        layer.trainable = False
+
+    n = layers.Resizing(224, 224, pad_to_aspect_ratio=True,)(input_layer)
+    # n = AdaptiveAveragePooling2D(224)(input_layer)
+    n = nima(n)
+    n = layers.GlobalAveragePooling2D()(n)
 
     # conv route
-    c = layers.Conv2D(16, (7,7), strides=(2,2), padding='same', activation='relu')(input_layer)
-    c = layers.MaxPooling2D((3,3), strides=(2,2), padding='same')(c)
-    
-    c = LightInceptionModule(c, 8, 16, 8)
-    c = LightInceptionModule(c, 16, 24, 16)
-    c = layers.MaxPooling2D((3,3), strides=(2,2), padding='same')(c)
-    
-    c = _spp(c)
-    c = layers.Dense(units=128, activation="relu", kernel_regularizer=l2(1e-4))(c)
-    c = layers.Dropout(0.4, seed=SEED)(c)
+    cc = []
+    f_shape = 7
+
+    c = layers.Conv2D(32, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(input_layer)
+    c = layers.Conv2D(32, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
+
+    c = layers.AveragePooling2D(pool_size=(2,2))(c)
+    c = layers.Conv2D(48, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    c = layers.Conv2D(48, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
+
+    c = layers.AveragePooling2D(pool_size=(2,2))(c)
+    c = layers.Conv2D(64, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    c = layers.Conv2D(64, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
+
+    c = layers.AveragePooling2D(pool_size=(2,2))(c)
+    c = layers.Conv2D(96, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    c = layers.Conv2D(96, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
+
+    c = layers.AveragePooling2D(pool_size=(2,2))(c)
+    c = layers.Conv2D(128, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    c = layers.Conv2D(128, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
+
+    c = layers.Concatenate(axis=-1)(cc)
+    c_channels = keras.backend.int_shape(c)[-1]
+
+    c = layers.Conv2D(c_channels // 4, (1,1), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    c = layers.Conv2D(c_channels // 4, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    c = layers.Conv2D(c_channels // 4, (1,1), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+
+    c = channel_attention(c)
 
     # merge
-    x = layers.Concatenate()([h, c])
+    x = layers.Concatenate()([n, c])
+    x = layers.Dense(units=1024, activation="relu", kernel_regularizer=l2(1e-4))(x)
     x = layers.Dense(units=128, activation="relu", kernel_regularizer=l2(1e-4))(x)
-    x = layers.Dense(units=128, activation="relu", kernel_regularizer=l2(1e-4))(x)
-    x = layers.Dropout(0.4, seed=SEED)(x)
+    x = layers.Dropout(0.4)(x)
 
     return x
 
@@ -118,8 +175,6 @@ def init_model_continuous(height, width, gaussian=0):
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=1e-4),
         loss=keras.losses.MeanSquaredError(),
-        # loss=keras.losses.Huber(delta=0.1),
-        # loss=keras.losses.MeanAbsoluteError(),
         metrics=[keras.metrics.MeanAbsoluteError()]
     )
 
