@@ -9,6 +9,7 @@ sys.path.append(f'{PROJECT_DIR}/src')
 import images, labels, models
 from tracker import Tracker
 from batchcallback import BatchCallback
+from weights_histogram_callback import WeightsHistogramCallback
 
 # input
 DATA_DIR = f'{PROJECT_DIR}/data'
@@ -173,6 +174,7 @@ def main():
     )
 
     batch_callback = BatchCallback(tracker, EPOCHS, MODEL_FILE, batches_per_epoch)
+    weights_callback = WeightsHistogramCallback(log_dir=OUTPUT_DIR)
 
     tensorboard_callback = tf.keras.callbacks.TensorBoard(
         log_dir=OUTPUT_DIR,
@@ -187,7 +189,7 @@ def main():
         validation_data=val_dataset,
         initial_epoch=tracker.epoch,
         epochs=EPOCHS,
-        callbacks=[batch_callback, tensorboard_callback]
+        callbacks=[batch_callback, tensorboard_callback, weights_callback]
     )
 
     tracker.logprint("Program completed")
