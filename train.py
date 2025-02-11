@@ -175,7 +175,12 @@ def main():
     batch_callback = BatchCallback(tracker, EPOCHS, MODEL_FILE, batches_per_epoch)
     csv_logger = tf.keras.callbacks.CSVLogger(f"{OUTPUT_DIR}/history.csv", append=True)
 
-    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=OUTPUT_DIR, write_graph=True, histogram_freq=1)
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(
+        log_dir=OUTPUT_DIR,
+        write_graph=True,
+        histogram_freq=1,
+        update_freq='batch'
+    )
 
     history = model.fit(
         dataset,
