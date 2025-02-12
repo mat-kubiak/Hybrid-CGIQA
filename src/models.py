@@ -76,6 +76,7 @@ def _hidden_layers(input_layer):
 
     n = layers.Resizing(224, 224)(input_layer)
     # n = AdaptiveAveragePooling2D(224)(input_layer)
+    n = layers.Lambda(lambda x: x*2 - 1.0)(n) # transform to MobileNet input range of (-1., 1.)
     n = nima(n)
     n = layers.GlobalAveragePooling2D()(n)
 
