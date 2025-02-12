@@ -74,7 +74,7 @@ def _hidden_layers(input_layer):
     for layer in nima.layers:
         layer.trainable = False
 
-    n = layers.Resizing(224, 224, pad_to_aspect_ratio=True,)(input_layer)
+    n = layers.Resizing(224, 224)(input_layer)
     # n = AdaptiveAveragePooling2D(224)(input_layer)
     n = nima(n)
     n = layers.GlobalAveragePooling2D()(n)

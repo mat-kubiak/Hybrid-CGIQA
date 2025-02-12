@@ -12,7 +12,7 @@ def load_image(path, height, width, augment_with=None, antialias=False):
         image = tf.clip_by_value(image, 0.0, 1.0)
 
     if height != None and width != None:
-        image = tf.image.resize_with_pad(image, height, width, method=tf.image.ResizeMethod.BILINEAR, antialias=antialias)
+        image = tf.image.resize_with_crop_or_pad(image, height, width)
     
     return image
 
