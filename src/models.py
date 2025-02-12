@@ -40,7 +40,7 @@ def channel_attention(input):
     i_shape = keras.backend.int_shape(input)
     channels = i_shape[-1]
 
-    d1 = layers.Dense(units=64)
+    d1 = layers.Dense(units=64, activation='leaky_relu')
     d2 = layers.Dense(units=channels)
 
     pool = (i_shape[1], i_shape[2])
@@ -83,8 +83,8 @@ def _hidden_layers(input_layer):
     cc = []
     f_shape = 7
 
-    reg = l2(1e-5)
-    act_fn = 'relu'
+    reg = l2(1e-6)
+    act_fn = 'leaky_relu'
 
     c = layers.Conv2D(32, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(input_layer)
     c = layers.Conv2D(32, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
