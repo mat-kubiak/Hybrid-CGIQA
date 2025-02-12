@@ -200,13 +200,20 @@ def main():
         update_freq='batch'
     )
 
+    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
+        monitor='val_loss',
+        factor=0.5,
+        patience=3,
+        min_lr=1e-6
+    )
+
     history = model.fit(
         dataset,
         verbose=1,
         validation_data=val_dataset,
         initial_epoch=tracker.epoch,
         epochs=EPOCHS,
-        callbacks=[batch_callback, tensorboard_callback, weights_callback]
+        callbacks=[batch_callback, tensorboard_callback, weights_callback, reduce_lr]
     )
 
     tracker.logprint("Program completed")
