@@ -122,36 +122,39 @@ def _hidden_layers(input_layer):
     cc = []
     f_shape = 7
 
-    c = layers.Conv2D(32, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(input_layer)
-    c = layers.Conv2D(32, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    reg = l2(1e-5)
+    act_fn = 'relu'
+
+    c = layers.Conv2D(32, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(input_layer)
+    c = layers.Conv2D(32, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
     cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
 
     c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(48, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
-    c = layers.Conv2D(48, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    c = layers.Conv2D(48, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
+    c = layers.Conv2D(48, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
     cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
 
     c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(64, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
-    c = layers.Conv2D(64, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    c = layers.Conv2D(64, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
+    c = layers.Conv2D(64, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
     cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
 
     c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(96, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
-    c = layers.Conv2D(96, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    c = layers.Conv2D(96, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
+    c = layers.Conv2D(96, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
     cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
 
     c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(128, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
-    c = layers.Conv2D(128, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    c = layers.Conv2D(128, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
+    c = layers.Conv2D(128, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
     cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
 
     c = layers.Concatenate(axis=-1)(cc)
     c_channels = keras.backend.int_shape(c)[-1]
 
-    c = layers.Conv2D(c_channels // 4, (1,1), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
-    c = layers.Conv2D(c_channels // 4, (3,3), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
-    c = layers.Conv2D(c_channels // 4, (1,1), padding='same', activation='relu', kernel_regularizer=l2(1e-5))(c)
+    c = layers.Conv2D(c_channels // 4, (1,1), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
+    c = layers.Conv2D(c_channels // 4, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
+    c = layers.Conv2D(c_channels // 4, (1,1), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
 
     c = channel_attention(c)
 
