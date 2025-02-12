@@ -110,6 +110,16 @@ def _hidden_layers(input_layer):
     c = layers.Conv2D(128, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
     cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
 
+    c = layers.AveragePooling2D(pool_size=(2,2))(c)
+    c = layers.Conv2D(192, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
+    c = layers.Conv2D(192, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
+    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
+
+    c = layers.AveragePooling2D(pool_size=(2,2))(c)
+    c = layers.Conv2D(256, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
+    c = layers.Conv2D(256, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
+    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
+
     c = layers.Concatenate(axis=-1)(cc)
     c_channels = keras.backend.int_shape(c)[-1]
 
