@@ -197,7 +197,6 @@ def main():
         log_dir=OUTPUT_DIR,
         write_graph=True,
         histogram_freq=1,
-        update_freq='batch'
     )
 
     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
