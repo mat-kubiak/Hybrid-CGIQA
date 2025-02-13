@@ -1,4 +1,4 @@
-import os
+import os, random
 import tensorflow as tf
 import numpy as np
 
