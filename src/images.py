@@ -16,7 +16,7 @@ def load_image(path, height, width):
     return image
 
 def random_crop_image(image, height, width):
-    image = tf.random_crop(image, [height, width, 3], seed=SEED)
+    image = tf.image.random_crop(image, [height, width, 3], seed=SEED)
     return image
 
 def get_image_list(dir_path):
