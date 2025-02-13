@@ -86,43 +86,41 @@ def _hidden_layers(input_layer):
     n = layers.Dropout(0.7)(n)
 
     # conv route
-    cc = []
-    f_shape = 7
+    effnet = tf.keras.applications.EfficientNetV2B0(
+        include_top=False,
+        weights='imagenet',
+        input_shape=(224, 224, 3),
+    )
+    
+    names = [
+        'block1a_project_activation',
+        'block2b_add',
+        'block3b_add',
+        'block4c_add',
+        'block5e_add',
+        # 'block6h_add',
+        # 'top_activation',
+    ]
 
+    output_layers = []
+    for name in names:
+        output_layers.append(effnet.get_layer(name).output)
+
+    effnet = tf.keras.models.Model(inputs=effnet.input, outputs=output_layers, name='EfficientV2Backbone')
+    effnet.trainable = False
+
+    f_shape = 7
     reg = l2(1e-6)
     act_fn = 'leaky_relu'
     dropout = 0.1
 
-    c = layers.Conv2D(32, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(input_layer)
-    c = layers.Conv2D(32, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Dropout(dropout, seed=SEED)(c)
-    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
+    cc = effnet(input_layer)
+    cc2 = []
+    
+    for c in cc:
+        cc2.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
 
-    c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(48, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Conv2D(48, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Dropout(dropout, seed=SEED)(c)
-    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
-
-    c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(64, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Conv2D(64, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Dropout(dropout, seed=SEED)(c)
-    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
-
-    c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(96, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Conv2D(96, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Dropout(dropout, seed=SEED)(c)
-    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
-
-    c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(128, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Conv2D(128, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Dropout(dropout, seed=SEED)(c)
-    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
-
-    c = layers.Concatenate(axis=-1)(cc)
+    c = layers.Concatenate(axis=-1)(cc2)
     c_channels = keras.backend.int_shape(c)[-1]
 
     c = layers.Conv2D(c_channels // 4, (1,1), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
