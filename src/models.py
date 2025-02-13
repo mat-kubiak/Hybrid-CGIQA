@@ -163,7 +163,7 @@ def init_model_continuous(height, width, gaussian=0):
         optimizer=keras.optimizers.Adam(learning_rate=1e-5),
         loss=keras.losses.MeanSquaredError(),
         metrics=[
-            keras.metrics.MeanRootSquaredError(),
+            keras.metrics.RootMeanSquaredError(),
             keras.metrics.MeanAbsoluteError(),
             emd
         ]
