@@ -11,7 +11,7 @@ def load_image(path, height, width):
     image = tf.image.decode_jpeg(image, channels=3)
     image = tf.cast(image, tf.float32) / 255.0
 
-    image = tf.image.resize(image, [height, width, 3])
+    image = tf.image.resize(image, [height, width])
 
     return image
 
