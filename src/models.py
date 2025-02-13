@@ -160,10 +160,10 @@ def init_model_continuous(height, width, gaussian=0):
     model = keras.Model(inputs=input_layer, outputs=output_layer)
 
     model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=1e-4),
+        optimizer=keras.optimizers.Adam(learning_rate=1e-5),
         loss=keras.losses.MeanSquaredError(),
         metrics=[
-            keras.metrics.MeanSquaredError(),
+            keras.metrics.MeanRootSquaredError(),
             keras.metrics.MeanAbsoluteError(),
             emd
         ]

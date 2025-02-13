@@ -29,15 +29,17 @@ STATUS_FILE = f'{OUTPUT_DIR}/status.ini'
 MODEL_FILE = f'{OUTPUT_DIR}/model.keras'
 BACKUP_FILE = f'{OUTPUT_DIR}/backup.keras'
 
-HEIGHT = None
-WIDTH = None
+HEIGHT = 256
+WIDTH = 256
+MODEL_HEIGHT = 224
+MODEL_WIDTH = 224
+
 FIT_BATCH_SIZE = 32
 VAL_BATCH_SIZE = 32
 EPOCHS = 50
 FIXED_VAL_IMG_DIMS = True
 IS_CATEGORICAL = False
 ANTIALIASING = False
-AUGMENT = False
 GAUSSIAN_NOISE = 0
 WEIGHT_SAMPLING = 0
 
@@ -47,7 +49,6 @@ VAL_LIMIT = None
 
 tracker = None
 model = None
-augment_model = None
 fit_mos = None
 fit_imgs = None
 val_mos = None
@@ -100,7 +101,7 @@ def log_hparams():
         'epochs': EPOCHS,
         'output': 'categorical' if IS_CATEGORICAL else 'numerical',
         'image_antialiasing': ANTIALIASING,
-        'image_augmentation': AUGMENT,
+        'image_augmentation': True,
         'total_layers': len(model.layers),
         'optimizer': model.optimizer.__class__.__name__,
         'trainable_params': model.count_params(),
@@ -140,15 +141,16 @@ def initialize_model():
     log_hparams()
 
 def load_val_image(path, label):
-    image = images.load_image(path, HEIGHT, HEIGHT)
+    image = images.load_image(path, MODEL_HEIGHT, MODEL_WIDTH)
     return image, label
 
 def load_fit_image(path, label, weight):
-    image = images.load_image(path, HEIGHT, WIDTH, augment_with=augment_model, antialias=ANTIALIASING)
+    image = images.load_image(path, HEIGHT, WIDTH)
+    image = images.random_crop_image(path, MODEL_HEIGHT, MODEL_WIDTH)
     return image, label, weight
 
 def main():
-    global model, tracker, augment_model
+    global model, tracker
 
     os.makedirs(os.path.dirname(OUTPUT_DIR), exist_ok=True)
 
@@ -158,8 +160,6 @@ def main():
 
     initialize_resources()
     initialize_model()
-
-    augment_model = models.get_augmentation_model() if AUGMENT else None
 
     if WEIGHT_SAMPLING != 0:
         sample_weights = models.get_sample_weights(fit_mos, power=WEIGHT_SAMPLING)
