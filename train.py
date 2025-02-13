@@ -146,7 +146,7 @@ def load_val_image(path, label):
 
 def load_fit_image(path, label, weight):
     image = images.load_image(path, HEIGHT, WIDTH)
-    image = images.random_crop_image(path, MODEL_HEIGHT, MODEL_WIDTH)
+    image = images.random_crop_image(image, MODEL_HEIGHT, MODEL_WIDTH)
     return image, label, weight
 
 def main():
