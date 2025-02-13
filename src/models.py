@@ -80,6 +80,11 @@ def _hidden_layers(input_layer):
     n = nima(n)
     n = layers.GlobalAveragePooling2D()(n)
 
+    n = layers.Dense(units=512, activation="relu", kernel_regularizer=l2(1e-4))(n)
+    n = layers.Dropout(0.7)(n)
+    n = layers.Dense(units=256, activation="relu", kernel_regularizer=l2(1e-4))(n)
+    n = layers.Dropout(0.7)(n)
+
     # conv route
     cc = []
     f_shape = 7
@@ -117,18 +122,6 @@ def _hidden_layers(input_layer):
     c = layers.Dropout(dropout, seed=SEED)(c)
     cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
 
-    c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(192, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Conv2D(192, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Dropout(dropout, seed=SEED)(c)
-    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
-
-    c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(256, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Conv2D(256, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Dropout(dropout, seed=SEED)(c)
-    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
-
     c = layers.Concatenate(axis=-1)(cc)
     c_channels = keras.backend.int_shape(c)[-1]
 
@@ -138,11 +131,17 @@ def _hidden_layers(input_layer):
 
     c = channel_attention(c)
 
+    c = layers.Dense(units=512, activation="relu", kernel_regularizer=l2(1e-4))(c)
+    c = layers.Dropout(0.7)(c)
+    c = layers.Dense(units=256, activation="relu", kernel_regularizer=l2(1e-4))(c)
+    c = layers.Dropout(0.7)(c)
+
     # merge
     x = layers.Concatenate()([n, c])
     x = layers.Dense(units=1024, activation="relu", kernel_regularizer=l2(1e-4))(x)
+    x = layers.Dropout(0.7)(x)
     x = layers.Dense(units=128, activation="relu", kernel_regularizer=l2(1e-4))(x)
-    x = layers.Dropout(0.4)(x)
+    x = layers.Dropout(0.7)(x)
 
     return x
 
