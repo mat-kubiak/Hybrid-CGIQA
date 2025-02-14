@@ -195,13 +195,6 @@ def main():
         restore_best_weights=True
     )
 
-    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
-        monitor='val_loss',
-        factor=0.2,
-        patience=3,
-        min_lr=1e-7
-    )
-
     history = model.fit(
         dataset,
         verbose=1,
