@@ -42,6 +42,14 @@ def channel_attention(input):
     f = layers.Flatten()(f)
     return f
 
+def _conv_block(input_layer, units, activation, regularizer, dropout):
+    x = input_layer
+    for u in units:
+        x = layers.Dense(units=u, activation=activation, kernel_regularizer=regularizer)(x)
+        x = layers.BatchNormalization()(x)
+        x = layers.Dropout(DROPOUT_DENSE)(x)
+    return x
+
 def _hidden_layers(input_layer):
 
     DROPOUT_DENSE = 0.5
@@ -60,14 +68,7 @@ def _hidden_layers(input_layer):
     n = layers.Lambda(lambda x: x*2 - 1.0)(input_layer) # transform to MobileNet input range of (-1., 1.)
     n = nima(n)
     n = layers.GlobalAveragePooling2D()(n)
-
-    n = layers.Dense(units=256, activation=ACT_DENSE, kernel_regularizer=L2_DENSE)(n)
-    n = layers.BatchNormalization()(n)
-    n = layers.Dropout(DROPOUT_DENSE)(n)
-
-    n = layers.Dense(units=128, activation=ACT_DENSE, kernel_regularizer=L2_DENSE)(n)
-    n = layers.BatchNormalization()(n)
-    n = layers.Dropout(DROPOUT_DENSE)(n)
+    n = _conv_block(n, [256, 128], ACT_DENSE, L2_DENSE, DROPOUT_DENSE)
 
     # conv route
     effnet = tf.keras.applications.EfficientNetV2B0(
@@ -111,25 +112,11 @@ def _hidden_layers(input_layer):
     c = layers.BatchNormalization()(c)
 
     c = channel_attention(c)
-
-    c = layers.Dense(units=256, activation=ACT_DENSE, kernel_regularizer=L2_DENSE)(c)
-    c = layers.BatchNormalization()(c)
-    c = layers.Dropout(DROPOUT_DENSE)(c)
-
-    c = layers.Dense(units=128, activation=ACT_DENSE, kernel_regularizer=L2_DENSE)(c)
-    c = layers.BatchNormalization()(c)
-    c = layers.Dropout(DROPOUT_DENSE)(c)
+    c = _conv_block(c, [256, 128], ACT_DENSE, L2_DENSE, DROPOUT_DENSE)
 
     # merge
     x = layers.Concatenate()([n, c])
-
-    x = layers.Dense(units=256, activation=ACT_DENSE, kernel_regularizer=L2_DENSE)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Dropout(DROPOUT_DENSE)(x)
-
-    x = layers.Dense(units=32, activation=ACT_DENSE, kernel_regularizer=L2_DENSE)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Dropout(DROPOUT_DENSE)(x)
+    x = _conv_block(x, [256, 32], ACT_DENSE, L2_DENSE, DROPOUT_DENSE)
 
     return x
 
