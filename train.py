@@ -29,17 +29,17 @@ STATUS_FILE = f'{OUTPUT_DIR}/status.ini'
 MODEL_FILE = f'{OUTPUT_DIR}/model.keras'
 BACKUP_FILE = f'{OUTPUT_DIR}/backup.keras'
 
-HEIGHT = None
-WIDTH = None
+HEIGHT = 240
+WIDTH = 370
+MODEL_HEIGHT = 224
+MODEL_WIDTH = 224
+
 FIT_BATCH_SIZE = 32
 VAL_BATCH_SIZE = 32
 EPOCHS = 50
 FIXED_VAL_IMG_DIMS = True
 IS_CATEGORICAL = False
-ANTIALIASING = False
-AUGMENT = False
 GAUSSIAN_NOISE = 0
-WEIGHT_SAMPLING = 0
 
 # if set, limits data to n first samples
 FIT_LIMIT = None
@@ -47,7 +47,6 @@ VAL_LIMIT = None
 
 tracker = None
 model = None
-augment_model = None
 fit_mos = None
 fit_imgs = None
 val_mos = None
@@ -58,6 +57,8 @@ SEED = 23478
 tf.random.set_seed(SEED)
 np.random.seed(SEED)
 random.seed(SEED)
+
+tf.keras.config.enable_unsafe_deserialization()
 
 def signal_handler(sig, frame):
     tracker.logprint(f"Received signal {sig}")
@@ -99,14 +100,11 @@ def log_hparams():
         'batch_size': FIT_BATCH_SIZE,
         'epochs': EPOCHS,
         'output': 'categorical' if IS_CATEGORICAL else 'numerical',
-        'image_antialiasing': ANTIALIASING,
-        'image_augmentation': AUGMENT,
         'total_layers': len(model.layers),
         'optimizer': model.optimizer.__class__.__name__,
         'trainable_params': model.count_params(),
         'loss': model.loss.__class__.__name__,
         'label-noise': GAUSSIAN_NOISE,
-        'weight-sampling': WEIGHT_SAMPLING
     }
 
     print(hparams)
@@ -140,15 +138,16 @@ def initialize_model():
     log_hparams()
 
 def load_val_image(path, label):
-    image = images.load_image(path, HEIGHT, HEIGHT)
+    image = images.load_image(path, MODEL_HEIGHT, MODEL_WIDTH)
     return image, label
 
-def load_fit_image(path, label, weight):
-    image = images.load_image(path, HEIGHT, WIDTH, augment_with=augment_model, antialias=ANTIALIASING)
-    return image, label, weight
+def load_fit_image(path, label):
+    image = images.load_image(path, HEIGHT, WIDTH)
+    image = images.random_crop_image(image, MODEL_HEIGHT, MODEL_WIDTH)
+    return image, label
 
 def main():
-    global model, tracker, augment_model
+    global model, tracker
 
     os.makedirs(os.path.dirname(OUTPUT_DIR), exist_ok=True)
 
@@ -159,19 +158,10 @@ def main():
     initialize_resources()
     initialize_model()
 
-    augment_model = models.get_augmentation_model() if AUGMENT else None
-
-    if WEIGHT_SAMPLING != 0:
-        sample_weights = models.get_sample_weights(fit_mos, power=WEIGHT_SAMPLING)
-    else:
-        sample_weights = np.ones(fit_mos.shape, dtype=np.float32)
-
-    dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos, sample_weights))
+    dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos))
         .shuffle(buffer_size=1000)
         .map(load_fit_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-        .padded_batch(FIT_BATCH_SIZE, 
-            padded_shapes=([None, None, 3], [], []),
-            padding_values=(0.0, 0.0, 1.0))
+        .batch(FIT_BATCH_SIZE)
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
 
@@ -199,11 +189,17 @@ def main():
         histogram_freq=1,
     )
 
+    early_stopping = tf.keras.callbacks.EarlyStopping(
+        monitor='val_loss',
+        patience=5,
+        restore_best_weights=True
+    )
+
     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
         monitor='val_loss',
-        factor=0.5,
+        factor=0.2,
         patience=3,
-        min_lr=1e-6
+        min_lr=1e-7
     )
 
     history = model.fit(
@@ -212,7 +208,7 @@ def main():
         validation_data=val_dataset,
         initial_epoch=tracker.epoch,
         epochs=EPOCHS,
-        callbacks=[batch_callback, tensorboard_callback, weights_callback, reduce_lr]
+        callbacks=[batch_callback, tensorboard_callback, weights_callback, early_stopping, reduce_lr]
     )
 
     tracker.logprint("Program completed")

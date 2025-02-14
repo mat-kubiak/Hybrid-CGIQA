@@ -25,22 +25,12 @@ def get_augmentation_model():
 
     return model
 
-def get_sample_weights(labels, power=1.0):
-    mean = tf.reduce_mean(labels)
-    std = tf.math.reduce_std(labels)
-    
-    z_scores = tf.abs(labels - mean) / std
-    
-    weights = 1.0 + tf.pow(z_scores, power)
-    
-    weights = weights / tf.reduce_mean(weights)
-    return weights
-
 def channel_attention(input):
     i_shape = keras.backend.int_shape(input)
     channels = i_shape[-1]
 
-    d1 = layers.Dense(units=64, activation='leaky_relu', kernel_regularizer=l2(1e-7))
+    rate = 8
+    d1 = layers.Dense(units=channels // rate, activation='leaky_relu', kernel_regularizer=l2(1e-7))
     d2 = layers.Dense(units=channels, kernel_regularizer=l2(1e-7))
 
     pool = (i_shape[1], i_shape[2])
@@ -67,6 +57,12 @@ def channel_attention(input):
 
 def _hidden_layers(input_layer):
 
+    DROPOUT_DENSE = 0.5
+    ACT_DENSE = 'relu'
+    ACT_CNN = 'leaky_relu'
+    L2_DENSE = l2(1e-3)
+    L2_CNN = l2(1e-6)
+
     # nima route
     nima = load_pretrained_nima()
     nima = keras.Model(inputs=nima.input, outputs=nima.layers[-4].output, name="pretrained_NIMA")
@@ -74,74 +70,79 @@ def _hidden_layers(input_layer):
     for layer in nima.layers:
         layer.trainable = False
 
-    n = layers.Resizing(224, 224, pad_to_aspect_ratio=True,)(input_layer)
-    # n = AdaptiveAveragePooling2D(224)(input_layer)
+    n = layers.Lambda(lambda x: x*2 - 1.0)(input_layer) # transform to MobileNet input range of (-1., 1.)
     n = nima(n)
     n = layers.GlobalAveragePooling2D()(n)
 
+    n = layers.Dense(units=256, activation=ACT_DENSE, kernel_regularizer=L2_DENSE)(n)
+    n = layers.BatchNormalization()(n)
+    n = layers.Dropout(DROPOUT_DENSE)(n)
+
+    n = layers.Dense(units=128, activation=ACT_DENSE, kernel_regularizer=L2_DENSE)(n)
+    n = layers.BatchNormalization()(n)
+    n = layers.Dropout(DROPOUT_DENSE)(n)
+
     # conv route
-    cc = []
+    effnet = tf.keras.applications.EfficientNetV2B0(
+        include_top=False,
+        weights='imagenet',
+        input_shape=(224, 224, 3),
+    )
+    
+    names = [
+        'block1a_project_activation',
+        'block2b_add',
+        'block3b_add',
+        'block4c_add',
+        'block5e_add',
+        'block6h_add',
+        'top_activation',
+    ]
+
+    output_layers = []
+    for name in names:
+        output_layers.append(effnet.get_layer(name).output)
+
+    effnet = tf.keras.models.Model(inputs=effnet.input, outputs=output_layers, name='EfficientV2Backbone')
+    # effnet.trainable = False
+
     f_shape = 7
+    cc = effnet(input_layer)
+    cc2 = []
+    
+    for c in cc:
+        cc2.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
 
-    reg = l2(1e-6)
-    act_fn = 'leaky_relu'
-    dropout = 0.1
-
-    c = layers.Conv2D(32, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(input_layer)
-    c = layers.Conv2D(32, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Dropout(dropout, seed=SEED)(c)
-    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
-
-    c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(48, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Conv2D(48, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Dropout(dropout, seed=SEED)(c)
-    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
-
-    c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(64, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Conv2D(64, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Dropout(dropout, seed=SEED)(c)
-    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
-
-    c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(96, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Conv2D(96, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Dropout(dropout, seed=SEED)(c)
-    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
-
-    c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(128, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Conv2D(128, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Dropout(dropout, seed=SEED)(c)
-    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
-
-    c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(192, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Conv2D(192, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Dropout(dropout, seed=SEED)(c)
-    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
-
-    c = layers.AveragePooling2D(pool_size=(2,2))(c)
-    c = layers.Conv2D(256, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Conv2D(256, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Dropout(dropout, seed=SEED)(c)
-    cc.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
-
-    c = layers.Concatenate(axis=-1)(cc)
+    c = layers.Concatenate(axis=-1)(cc2)
     c_channels = keras.backend.int_shape(c)[-1]
 
-    c = layers.Conv2D(c_channels // 4, (1,1), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Conv2D(c_channels // 4, (3,3), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
-    c = layers.Conv2D(c_channels // 4, (1,1), padding='same', activation=act_fn, kernel_regularizer=reg)(c)
+    c = layers.Conv2D(c_channels // 4, (1,1), padding='same', activation=ACT_CNN, kernel_regularizer=L2_CNN)(c)
+    c = layers.BatchNormalization()(c)
+    c = layers.Conv2D(c_channels // 4, (3,3), padding='same', activation=ACT_CNN, kernel_regularizer=L2_CNN)(c)
+    c = layers.BatchNormalization()(c)
+    c = layers.Conv2D(c_channels // 4, (1,1), padding='same', activation=ACT_CNN, kernel_regularizer=L2_CNN)(c)
+    c = layers.BatchNormalization()(c)
 
     c = channel_attention(c)
 
+    c = layers.Dense(units=256, activation=ACT_DENSE, kernel_regularizer=L2_DENSE)(c)
+    c = layers.BatchNormalization()(c)
+    c = layers.Dropout(DROPOUT_DENSE)(c)
+
+    c = layers.Dense(units=128, activation=ACT_DENSE, kernel_regularizer=L2_DENSE)(c)
+    c = layers.BatchNormalization()(c)
+    c = layers.Dropout(DROPOUT_DENSE)(c)
+
     # merge
     x = layers.Concatenate()([n, c])
-    x = layers.Dense(units=1024, activation="relu", kernel_regularizer=l2(1e-4))(x)
-    x = layers.Dense(units=128, activation="relu", kernel_regularizer=l2(1e-4))(x)
-    x = layers.Dropout(0.4)(x)
+
+    x = layers.Dense(units=256, activation=ACT_DENSE, kernel_regularizer=L2_DENSE)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Dropout(DROPOUT_DENSE)(x)
+
+    x = layers.Dense(units=32, activation=ACT_DENSE, kernel_regularizer=L2_DENSE)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Dropout(DROPOUT_DENSE)(x)
 
     return x
 
@@ -159,11 +160,22 @@ def init_model_continuous(height, width, gaussian=0):
 
     model = keras.Model(inputs=input_layer, outputs=output_layer)
 
+    initial_learning_rate = 1e-4  # Start higher
+    decay_steps = 1000
+    decay_rate = 0.9
+
+    lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+        initial_learning_rate,
+        decay_steps=decay_steps,
+        decay_rate=decay_rate,
+        staircase=True
+    )
+
     model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=1e-4),
-        loss=keras.losses.MeanSquaredError(),
+        optimizer=keras.optimizers.Adam(learning_rate=lr_schedule),
+        loss=keras.losses.Huber(delta=0.1),
         metrics=[
-            keras.metrics.MeanSquaredError(),
+            keras.metrics.RootMeanSquaredError(),
             keras.metrics.MeanAbsoluteError(),
             emd
         ]
