@@ -12,6 +12,20 @@ SEED = 23478
 tf.random.set_seed(SEED)
 random.seed(SEED)
 
+DROPOUT_DENSE = 0.5
+ACT_DENSE = 'relu'
+ACT_CNN = 'leaky_relu'
+L2_DENSE = l2(1e-3)
+L2_CNN = l2(1e-6)
+
+def _dense_blocks(input_layer, units):
+    x = input_layer
+    for u in units:
+        x = layers.Dense(units=u, activation=ACT_DENSE, kernel_regularizer=L2_DENSE)(x)
+        x = layers.BatchNormalization()(x)
+        x = layers.Dropout(DROPOUT_DENSE)(x)
+    return x
+
 def channel_attention(input):
     i_shape = keras.backend.int_shape(input)
     channels = i_shape[-1]
@@ -42,21 +56,7 @@ def channel_attention(input):
     f = layers.Flatten()(f)
     return f
 
-def _conv_block(input_layer, units, activation, regularizer, dropout):
-    x = input_layer
-    for u in units:
-        x = layers.Dense(units=u, activation=activation, kernel_regularizer=regularizer)(x)
-        x = layers.BatchNormalization()(x)
-        x = layers.Dropout(DROPOUT_DENSE)(x)
-    return x
-
 def _hidden_layers(input_layer):
-
-    DROPOUT_DENSE = 0.5
-    ACT_DENSE = 'relu'
-    ACT_CNN = 'leaky_relu'
-    L2_DENSE = l2(1e-3)
-    L2_CNN = l2(1e-6)
 
     # nima route
     nima = load_pretrained_nima()
@@ -68,7 +68,7 @@ def _hidden_layers(input_layer):
     n = layers.Lambda(lambda x: x*2 - 1.0)(input_layer) # transform to MobileNet input range of (-1., 1.)
     n = nima(n)
     n = layers.GlobalAveragePooling2D()(n)
-    n = _conv_block(n, [256, 128], ACT_DENSE, L2_DENSE, DROPOUT_DENSE)
+    n = _dense_blocks(n, [256, 128])
 
     # conv route
     effnet = tf.keras.applications.EfficientNetV2B0(
@@ -112,11 +112,11 @@ def _hidden_layers(input_layer):
     c = layers.BatchNormalization()(c)
 
     c = channel_attention(c)
-    c = _conv_block(c, [256, 128], ACT_DENSE, L2_DENSE, DROPOUT_DENSE)
+    c = _dense_blocks(c, [256, 128])
 
     # merge
     x = layers.Concatenate()([n, c])
-    x = _conv_block(x, [256, 32], ACT_DENSE, L2_DENSE, DROPOUT_DENSE)
+    x = _dense_blocks(x, [256, 32])
 
     return x
 
