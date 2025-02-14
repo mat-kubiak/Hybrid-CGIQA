@@ -29,8 +29,8 @@ STATUS_FILE = f'{OUTPUT_DIR}/status.ini'
 MODEL_FILE = f'{OUTPUT_DIR}/model.keras'
 BACKUP_FILE = f'{OUTPUT_DIR}/backup.keras'
 
-HEIGHT = 256
-WIDTH = 256
+HEIGHT = 240
+WIDTH = 370
 MODEL_HEIGHT = 224
 MODEL_WIDTH = 224
 
@@ -59,6 +59,8 @@ SEED = 23478
 tf.random.set_seed(SEED)
 np.random.seed(SEED)
 random.seed(SEED)
+
+tf.keras.config.enable_unsafe_deserialization()
 
 def signal_handler(sig, frame):
     tracker.logprint(f"Received signal {sig}")
@@ -144,10 +146,10 @@ def load_val_image(path, label):
     image = images.load_image(path, MODEL_HEIGHT, MODEL_WIDTH)
     return image, label
 
-def load_fit_image(path, label, weight):
+def load_fit_image(path, label):
     image = images.load_image(path, HEIGHT, WIDTH)
     image = images.random_crop_image(image, MODEL_HEIGHT, MODEL_WIDTH)
-    return image, label, weight
+    return image, label
 
 def main():
     global model, tracker
@@ -166,12 +168,10 @@ def main():
     else:
         sample_weights = np.ones(fit_mos.shape, dtype=np.float32)
 
-    dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos, sample_weights))
+    dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos))
         .shuffle(buffer_size=1000)
         .map(load_fit_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-        .padded_batch(FIT_BATCH_SIZE, 
-            padded_shapes=([None, None, 3], [], []),
-            padding_values=(0.0, 0.0, 1.0))
+        .batch(FIT_BATCH_SIZE)
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
 
@@ -199,14 +199,12 @@ def main():
         histogram_freq=1,
     )
 
-    # Add early stopping with patience
     early_stopping = tf.keras.callbacks.EarlyStopping(
         monitor='val_loss',
         patience=5,
         restore_best_weights=True
     )
 
-    # Add reduce learning rate on plateau
     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
         monitor='val_loss',
         factor=0.2,
