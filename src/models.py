@@ -12,18 +12,6 @@ SEED = 23478
 tf.random.set_seed(SEED)
 random.seed(SEED)
 
-def get_augmentation_model():
-    model = keras.Sequential([
-        layers.RandomRotation(0.002),
-        layers.RandomTranslation(0.02, 0.02),
-        layers.RandomZoom(0.02),
-        
-        layers.RandomBrightness(0.02, value_range=(0, 1)),
-        layers.RandomContrast(0.02),
-    ])
-
-    return model
-
 def channel_attention(input):
     i_shape = keras.backend.int_shape(input)
     channels = i_shape[-1]
