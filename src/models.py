@@ -7,7 +7,6 @@ from tensorflow.keras.regularizers import l2
 from ordinalcrossentropy import OrdinalCrossentropy
 from adaptivepooling import AdaptiveAveragePooling2D
 from nima import load_pretrained_nima
-from vendor.utils.losses import earth_movers_distance
 
 SEED = 23478
 tf.random.set_seed(SEED)
@@ -148,7 +147,7 @@ def _hidden_layers(input_layer):
 
 @keras.utils.register_keras_serializable()
 def emd(y_true, y_pred):
-    return earth_movers_distance(y_true, y_pred)
+    return tf.reduce_mean(tf.abs(y_true - y_pred))
 
 def init_model_continuous(height, width, gaussian=0):
     input_layer = layers.Input(shape=(height, width, 3))
