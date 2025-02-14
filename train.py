@@ -201,7 +201,7 @@ def main():
         validation_data=val_dataset,
         initial_epoch=tracker.epoch,
         epochs=EPOCHS,
-        callbacks=[batch_callback, tensorboard_callback, weights_callback, early_stopping, reduce_lr]
+        callbacks=[batch_callback, tensorboard_callback, weights_callback, early_stopping]
     )
 
     tracker.logprint("Program completed")
