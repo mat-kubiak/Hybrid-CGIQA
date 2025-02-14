@@ -2,6 +2,7 @@ import os, sys, traceback
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(f'{PROJECT_DIR}/src')
@@ -25,6 +26,10 @@ LIMIT = None
 PRINT_LIMIT = 10
 
 tf.keras.config.enable_unsafe_deserialization()
+
+def logistic_function(y, beta1, beta2, beta3, beta4, beta5):
+    out = beta1 * (0.5 - 1 / (1 + np.exp(beta2 * (y - beta3)))) + beta4 * y + beta5
+    return out.astype(np.float32)
 
 def load_image(path, label):
     image = images.load_image(path, HEIGHT, WIDTH)
@@ -82,6 +87,14 @@ def main():
 
     else:
         predictions = model.predict(dataset).flatten()
+
+        params, covariance = curve_fit(logistic_function, predictions, mos, p0=[1, 1, 1, 1, 1])
+        beta1, beta2, beta3, beta4, beta5 = params
+
+        print("Fitted Parameters:")
+        print(f"β1 = {beta1}, β2 = {beta2}, β3 = {beta3}, β4 = {beta4}, β5 = {beta5}")
+
+        predictions = logistic_function(predictions, *params)
 
         mae = tf.keras.metrics.MeanAbsoluteError()
         mse = tf.keras.metrics.MeanSquaredError()
