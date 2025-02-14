@@ -39,7 +39,6 @@ VAL_BATCH_SIZE = 32
 EPOCHS = 50
 FIXED_VAL_IMG_DIMS = True
 IS_CATEGORICAL = False
-ANTIALIASING = False
 GAUSSIAN_NOISE = 0
 
 # if set, limits data to n first samples
@@ -101,14 +100,11 @@ def log_hparams():
         'batch_size': FIT_BATCH_SIZE,
         'epochs': EPOCHS,
         'output': 'categorical' if IS_CATEGORICAL else 'numerical',
-        'image_antialiasing': ANTIALIASING,
-        'image_augmentation': True,
         'total_layers': len(model.layers),
         'optimizer': model.optimizer.__class__.__name__,
         'trainable_params': model.count_params(),
         'loss': model.loss.__class__.__name__,
         'label-noise': GAUSSIAN_NOISE,
-        'weight-sampling': False
     }
 
     print(hparams)
