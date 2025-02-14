@@ -199,11 +199,19 @@ def main():
         histogram_freq=1,
     )
 
+    # Add early stopping with patience
+    early_stopping = tf.keras.callbacks.EarlyStopping(
+        monitor='val_loss',
+        patience=5,
+        restore_best_weights=True
+    )
+
+    # Add reduce learning rate on plateau
     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
         monitor='val_loss',
-        factor=0.5,
+        factor=0.2,
         patience=3,
-        min_lr=1e-6
+        min_lr=1e-7
     )
 
     history = model.fit(
@@ -212,7 +220,7 @@ def main():
         validation_data=val_dataset,
         initial_epoch=tracker.epoch,
         epochs=EPOCHS,
-        callbacks=[batch_callback, tensorboard_callback, weights_callback, reduce_lr]
+        callbacks=[batch_callback, tensorboard_callback, weights_callback, early_stopping, reduce_lr]
     )
 
     tracker.logprint("Program completed")
