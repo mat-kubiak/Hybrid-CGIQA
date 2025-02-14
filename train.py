@@ -41,7 +41,6 @@ FIXED_VAL_IMG_DIMS = True
 IS_CATEGORICAL = False
 ANTIALIASING = False
 GAUSSIAN_NOISE = 0
-WEIGHT_SAMPLING = 0
 
 # if set, limits data to n first samples
 FIT_LIMIT = None
@@ -109,7 +108,7 @@ def log_hparams():
         'trainable_params': model.count_params(),
         'loss': model.loss.__class__.__name__,
         'label-noise': GAUSSIAN_NOISE,
-        'weight-sampling': WEIGHT_SAMPLING
+        'weight-sampling': False
     }
 
     print(hparams)
@@ -162,11 +161,6 @@ def main():
 
     initialize_resources()
     initialize_model()
-
-    if WEIGHT_SAMPLING != 0:
-        sample_weights = models.get_sample_weights(fit_mos, power=WEIGHT_SAMPLING)
-    else:
-        sample_weights = np.ones(fit_mos.shape, dtype=np.float32)
 
     dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos))
         .shuffle(buffer_size=1000)

@@ -25,17 +25,6 @@ def get_augmentation_model():
 
     return model
 
-def get_sample_weights(labels, power=1.0):
-    mean = tf.reduce_mean(labels)
-    std = tf.math.reduce_std(labels)
-    
-    z_scores = tf.abs(labels - mean) / std
-    
-    weights = 1.0 + tf.pow(z_scores, power)
-    
-    weights = weights / tf.reduce_mean(weights)
-    return weights
-
 def channel_attention(input):
     i_shape = keras.backend.int_shape(input)
     channels = i_shape[-1]
