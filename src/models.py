@@ -75,7 +75,7 @@ def _hidden_layers(input_layer):
         layer.trainable = False
 
     # [0,255] -> [-1,1]
-    n = layers.Rescale(scale=1.0/127.5, offset=-1.0)(input_layer)
+    n = layers.Rescaling(scale=1.0/127.5, offset=-1.0)(input_layer)
     n = nima(n)
     n = layers.GlobalAveragePooling2D()(n)
     n = _dense_blocks(n, [256, 128, 64])
