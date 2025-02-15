@@ -37,7 +37,6 @@ MODEL_WIDTH = 224
 FIT_BATCH_SIZE = 32
 VAL_BATCH_SIZE = 32
 EPOCHS = 50
-FIXED_VAL_IMG_DIMS = True
 IS_CATEGORICAL = False
 GAUSSIAN_NOISE = 0
 
@@ -126,7 +125,7 @@ def initialize_model():
             sys.exit(-1)
     else:
         try:
-            model = models.init_model(None, None, IS_CATEGORICAL, gaussian=GAUSSIAN_NOISE)
+            model = models.init_model(MODEL_HEIGHT, MODEL_WIDTH, IS_CATEGORICAL, gaussian=GAUSSIAN_NOISE)
             tf.keras.utils.plot_model(model, to_file=f"{OUTPUT_DIR}/arch.png", show_shapes=True, show_dtype=True, show_layer_names=True)
             tracker.logprint(f"Initialized new model")
         except Exception as e:
@@ -165,20 +164,11 @@ def main():
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
 
-    if FIXED_VAL_IMG_DIMS:
-        val_dataset = (tf.data.Dataset.from_tensor_slices((val_imgs, val_mos))
-            .map(load_val_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-            .batch(VAL_BATCH_SIZE)
-            .prefetch(tf.data.experimental.AUTOTUNE)
-        )
-    else:
-        val_dataset = (tf.data.Dataset.from_tensor_slices((val_imgs, val_mos))
-            .map(load_val_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-            .padded_batch(VAL_BATCH_SIZE,
-                padded_shapes=([None, None, 3], []), 
-                padding_values=(0.0, 0.0))
-            .prefetch(tf.data.experimental.AUTOTUNE)
-        )
+    val_dataset = (tf.data.Dataset.from_tensor_slices((val_imgs, val_mos))
+        .map(load_val_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        .batch(VAL_BATCH_SIZE)
+        .prefetch(tf.data.experimental.AUTOTUNE)
+    )
 
     batch_callback = BatchCallback(tracker, EPOCHS, MODEL_FILE, batches_per_epoch)
     weights_callback = WeightsHistogramCallback(log_dir=OUTPUT_DIR)
