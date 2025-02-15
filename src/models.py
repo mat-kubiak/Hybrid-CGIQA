@@ -68,7 +68,7 @@ def _hidden_layers(input_layer):
     n = layers.Lambda(lambda x: x*2 - 1.0)(input_layer) # transform to MobileNet input range of (-1., 1.)
     n = nima(n)
     n = layers.GlobalAveragePooling2D()(n)
-    n = _dense_blocks(n, [256, 128])
+    n = _dense_blocks(n, [256, 128, 64])
 
     # conv route
     effnet = tf.keras.applications.EfficientNetV2B0(
@@ -112,11 +112,11 @@ def _hidden_layers(input_layer):
     c = layers.BatchNormalization()(c)
 
     c = channel_attention(c)
-    c = _dense_blocks(c, [256, 128])
+    c = _dense_blocks(c, [256, 128, 64])
 
     # merge
     x = layers.Concatenate()([n, c])
-    x = _dense_blocks(x, [256, 32])
+    x = _dense_blocks(x, [1024, 128])
 
     return x
 
