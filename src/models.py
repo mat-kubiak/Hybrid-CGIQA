@@ -147,8 +147,8 @@ def init_model_continuous(height, width, gaussian=0):
     )
 
     model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=lr_schedule),
-        loss=keras.losses.Huber(delta=0.1),
+        optimizer=keras.optimizers.Adam(learning_rate=1e-4),
+        loss=keras.losses.MeanSquaredError(),
         metrics=[
             keras.metrics.RootMeanSquaredError(),
             keras.metrics.MeanAbsoluteError(),
