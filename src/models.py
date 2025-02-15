@@ -60,13 +60,12 @@ def _hidden_layers(input_layer):
 
     # nima route
     nima = load_pretrained_nima()
-    nima = keras.Model(inputs=nima.input, outputs=nima.layers[-4].output, name="pretrained_NIMA")
+    nima = keras.Model(inputs=nima.input, outputs=nima.layers[-4].output, name="nima_backbone")
     
     for layer in nima.layers:
         layer.trainable = False
 
-    n = layers.Lambda(lambda x: x*2 - 1.0)(input_layer) # transform to MobileNet input range of (-1., 1.)
-    n = nima(n)
+    n = nima(input_layer)
     n = layers.GlobalAveragePooling2D()(n)
     n = _dense_blocks(n, [256, 128, 64])
 
@@ -75,8 +74,9 @@ def _hidden_layers(input_layer):
         include_top=False,
         weights='imagenet',
         input_shape=(224, 224, 3),
+        include_preprocessing=False
     )
-    
+
     names = [
         'block1a_project_activation',
         'block2b_add',
@@ -91,8 +91,7 @@ def _hidden_layers(input_layer):
     for name in names:
         output_layers.append(effnet.get_layer(name).output)
 
-    effnet = tf.keras.models.Model(inputs=effnet.input, outputs=output_layers, name='EfficientV2Backbone')
-    # effnet.trainable = False
+    effnet = tf.keras.models.Model(inputs=effnet.input, outputs=output_layers, name='efficient_net_v2_backbone')
 
     f_shape = 7
     cc = effnet(input_layer)
@@ -126,7 +125,9 @@ def emd(y_true, y_pred):
 
 def init_model_continuous(height, width, gaussian=0):
     input_layer = layers.Input(shape=(height, width, 3))
-    hidden_layers = _hidden_layers(input_layer)
+    preprocessed = layers.Lambda(lambda x: x*2 - 1.0, name="preprocessing")(input_layer)
+
+    hidden_layers = _hidden_layers(preprocessed)
     output_layer = layers.Dense(units=1, activation='linear')(hidden_layers)
     
     if gaussian != 0:
@@ -159,7 +160,9 @@ def init_model_continuous(height, width, gaussian=0):
 
 def init_model_categorical(height, width):
     input_layer = layers.Input(shape=(height, width, 3))
-    hidden_layers = _hidden_layers(input_layer)
+    preprocessed = layers.Lambda(lambda x: x*2 - 1.0, name="preprocessing")(input_layer)
+
+    hidden_layers = _hidden_layers(preprocessed)
     output_layer = layers.Dense(units=41, activation='softmax')(hidden_layers)
 
     model = keras.Model(inputs=input_layer, outputs=output_layer)
