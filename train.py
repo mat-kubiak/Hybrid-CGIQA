@@ -159,7 +159,7 @@ def main():
     initialize_model()
 
     dataset = (tf.data.Dataset.from_tensor_slices((fit_imgs, fit_mos))
-        .shuffle(buffer_size=1000)
+        .shuffle(buffer_size=len(fit_imgs), seed=SEED)
         .map(load_fit_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         .batch(FIT_BATCH_SIZE)
         .prefetch(tf.data.experimental.AUTOTUNE)
