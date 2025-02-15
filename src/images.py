@@ -9,10 +9,7 @@ random.seed(SEED)
 def load_image(path, height, width):
     image = tf.io.read_file(path)
     image = tf.image.decode_jpeg(image, channels=3)
-    image = tf.cast(image, tf.float32) / 255.0
-
     image = tf.image.resize(image, [height, width])
-
     return image
 
 def random_crop_image(image, height, width):

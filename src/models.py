@@ -70,11 +70,13 @@ def _hidden_layers(input_layer):
     # nima route
     nima = load_pretrained_nima()
     nima = keras.Model(inputs=nima.input, outputs=nima.layers[-4].output, name="nima_backbone")
-    
+
     for layer in nima.layers:
         layer.trainable = False
 
-    n = nima(input_layer)
+    # [0,255] -> [-1,1]
+    n = layers.Rescale(scale=1.0/127.5, offset=-1.0)(input_layer)
+    n = nima(n)
     n = layers.GlobalAveragePooling2D()(n)
     n = _dense_blocks(n, [256, 128, 64])
 
@@ -83,7 +85,7 @@ def _hidden_layers(input_layer):
         include_top=False,
         weights='imagenet',
         input_shape=(224, 224, 3),
-        include_preprocessing=False
+        include_preprocessing=True
     )
 
     names = [
@@ -130,9 +132,7 @@ def emd(y_true, y_pred):
 
 def init_model_continuous(height, width, gaussian=0):
     input_layer = layers.Input(shape=(height, width, 3))
-    preprocessed = layers.Lambda(lambda x: x*2 - 1.0, name="preprocessing")(input_layer)
-
-    hidden_layers = _hidden_layers(preprocessed)
+    hidden_layers = _hidden_layers(input_layer)
     output_layer = layers.Dense(units=1, activation='linear')(hidden_layers)
     
     if gaussian != 0:
