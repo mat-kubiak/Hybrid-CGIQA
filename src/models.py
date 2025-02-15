@@ -5,7 +5,6 @@ from tensorflow.keras import layers
 from tensorflow.keras.regularizers import l2
 
 from ordinalcrossentropy import OrdinalCrossentropy
-from adaptivepooling import AdaptiveAveragePooling2D
 from nima import load_pretrained_nima
 
 SEED = 23478
@@ -56,6 +55,16 @@ def channel_attention(input):
     f = layers.Flatten()(f)
     return f
 
+def _adaptive_average_pool_2D(x, target_shape):
+    _, ih, iw, _ = keras.backend.int_shape(x)
+    oh, ow = target_shape
+
+    pool_size = (ih // oh, iw // ow)
+    if pool_size == (1, 1):
+        return x
+
+    return layers.AveragePooling2D(pool_size=pool_size, strides=pool_size, padding="valid")(x)
+
 def _hidden_layers(input_layer):
 
     # nima route
@@ -93,14 +102,10 @@ def _hidden_layers(input_layer):
 
     effnet = tf.keras.models.Model(inputs=effnet.input, outputs=output_layers, name='efficient_net_v2_backbone')
 
-    f_shape = 7
     cc = effnet(input_layer)
-    cc2 = []
-    
-    for c in cc:
-        cc2.append(AdaptiveAveragePooling2D(grid_size=f_shape)(c))
+    cc = [_adaptive_average_pool_2D(c, (7,7)) for c in cc]
 
-    c = layers.Concatenate(axis=-1)(cc2)
+    c = layers.Concatenate(axis=-1)(cc)
     c_channels = keras.backend.int_shape(c)[-1]
 
     c = layers.Conv2D(c_channels // 4, (1,1), padding='same', activation=ACT_CNN, kernel_regularizer=L2_CNN)(c)
