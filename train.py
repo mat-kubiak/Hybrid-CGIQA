@@ -138,12 +138,12 @@ def initialize_model():
 
 def load_val_image(path, label):
     image = images.load_image(path, MODEL_HEIGHT, MODEL_WIDTH)
-    return image, label
+    return image, label * 20
 
 def load_fit_image(path, label):
     image = images.load_image(path, HEIGHT, WIDTH)
     image = images.random_crop_image(image, MODEL_HEIGHT, MODEL_WIDTH)
-    return image, label
+    return image, label * 20
 
 def main():
     global model, tracker
