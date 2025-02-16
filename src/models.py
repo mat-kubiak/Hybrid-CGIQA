@@ -69,7 +69,14 @@ def _hidden_layers(input_layer):
 
     # nima route
     nima = load_pretrained_nima()
-    nima = keras.Model(inputs=nima.input, outputs=nima.layers[-4].output, name="nima_backbone")
+
+    names = [
+        'global_average_pooling2d',
+        'dense',
+    ]
+    output_layers = [nima.get_layer(name).output for name in names]
+
+    nima = keras.Model(inputs=nima.input, outputs=output_layers, name="nima_backbone")
 
     for layer in nima.layers:
         layer.trainable = False
@@ -77,7 +84,7 @@ def _hidden_layers(input_layer):
     # [0,255] -> [-1,1]
     n = layers.Rescaling(scale=1.0/127.5, offset=-1.0)(input_layer)
     n = nima(n)
-    n = layers.GlobalAveragePooling2D()(n)
+    n = layers.Concatenate()(n)
     n = _dense_blocks(n, [256, 128, 64])
 
     # conv route
@@ -97,10 +104,7 @@ def _hidden_layers(input_layer):
         'block6h_add',
         'top_activation',
     ]
-
-    output_layers = []
-    for name in names:
-        output_layers.append(effnet.get_layer(name).output)
+    output_layers = [effnet.get_layer(name).output for name in names]
 
     effnet = tf.keras.models.Model(inputs=effnet.input, outputs=output_layers, name='efficient_net_v2_backbone')
 
@@ -134,7 +138,7 @@ def init_model_continuous(height, width, gaussian=0):
     input_layer = layers.Input(shape=(height, width, 3))
     hidden_layers = _hidden_layers(input_layer)
     output_layer = layers.Dense(units=1, activation='linear')(hidden_layers)
-    
+
     if gaussian != 0:
         output_layer = layers.GaussianNoise(gaussian)(output_layer)
 
