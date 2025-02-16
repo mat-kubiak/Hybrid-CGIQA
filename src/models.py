@@ -30,31 +30,29 @@ def _multi_channel_attention(input):
     channels = i_shape[-1]
 
     rate = 8
-    d1 = layers.Dense(units=channels // rate, activation='leaky_relu', kernel_regularizer=l2(1e-7))
-    d2 = layers.Dense(units=channels, kernel_regularizer=l2(1e-7))
+    d1 = layers.Dense(units=channels // rate, activation='leaky_relu', kernel_regularizer=l2(1e-7), name='attention_dense1')
+    d2 = layers.Dense(units=channels, kernel_regularizer=l2(1e-7), name='attention_dense2')
 
     pool = (i_shape[1], i_shape[2])
 
     # avg
-    a = layers.AveragePooling2D(pool_size=pool)(input)
-    a = layers.Flatten()(a)
+    a = layers.AveragePooling2D(pool_size=pool, name='attention_avgpool')(input)
+    a = layers.Flatten(name='attention_avgpool_flat')(a)
     a = d1(a)
     a = d2(a)
 
     # max
-    m = layers.MaxPooling2D(pool_size=pool)(input)
-    m = layers.Flatten()(m)
+    m = layers.MaxPooling2D(pool_size=pool, name='attention_maxpool')(input)
+    m = layers.Flatten(name='attention_maxpool_flat')(m)
     m = d1(m)
     m = d2(m)
 
     # final
-    f = layers.Add()([a, m])
-    f = layers.Activation('sigmoid')(f)
+    f = layers.Add(name='attention_add')([a, m])
+    f = layers.Activation('sigmoid', name='attention_act')(f)
 
-    f = layers.Reshape([1, 1, channels])(f)
-    f = layers.Multiply()([f, input])
-    f = layers.AveragePooling2D(pool_size=pool)(f)
-    f = layers.Flatten()(f)
+    f = layers.Reshape([1, 1, channels], name='attention_reshape')(f)
+    f = layers.Multiply(name='attention_mul')([f, input])
     return f
 
 def _adaptive_average_pool_2D(x, target_shape):
@@ -124,6 +122,8 @@ def _hidden_layers(input_layer):
     c = layers.BatchNormalization()(c)
 
     c = _multi_channel_attention(c)
+    c = layers.GlobalAveragePooling2D()(c)
+
     c = _dense_blocks(c, [256, 128, 64])
 
     # merge
