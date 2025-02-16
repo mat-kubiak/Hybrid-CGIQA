@@ -109,7 +109,7 @@ def main():
         rmse = rmse.result()
 
         rmse = tf.sqrt(mse).numpy()
-        emd = losses.earth_movers_distance(mos, predictions).numpy()
+        emd = models.emd(mos, predictions).numpy()
 
         print(f"MAE: {mae:.4f}")
         print(f"MSE: {mse:.4f}")
