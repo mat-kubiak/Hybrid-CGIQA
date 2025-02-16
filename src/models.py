@@ -130,10 +130,6 @@ def _hidden_layers(input_layer):
 
     return x
 
-@keras.utils.register_keras_serializable()
-def emd(y_true, y_pred):
-    return tf.reduce_mean(tf.abs(y_true - y_pred))
-
 def init_model_continuous(height, width):
     input_layer = layers.Input(shape=(height, width, 3))
     hidden_layers = _hidden_layers(input_layer)
@@ -158,7 +154,6 @@ def init_model_continuous(height, width):
         metrics=[
             keras.metrics.RootMeanSquaredError(),
             keras.metrics.MeanAbsoluteError(),
-            emd
         ]
     )
 
