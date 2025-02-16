@@ -3,12 +3,12 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
+from scipy.stats import pearsonr, spearmanr, kendalltau, wasserstein_distance
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(f'{PROJECT_DIR}/src')
 
 import images, labels, models
-from vendor.utils import losses
 
 MODEL_NAME = ''
 MODEL_PATH = f'{PROJECT_DIR}/output/{MODEL_NAME}/model.keras'
@@ -96,25 +96,19 @@ def main():
 
         predictions = logistic_function(predictions, *params)
 
-        mae = tf.keras.metrics.MeanAbsoluteError()
-        mse = tf.keras.metrics.MeanSquaredError()
-        rmse = tf.keras.metrics.RootMeanSquaredError()
-        
-        mae.update_state(mos, predictions)
-        mse.update_state(mos, predictions)
-        rmse.update_state(mos, predictions)
+        tf_metrics = [
+            ['MAE', tf.keras.metrics.MeanAbsoluteError()],
+            ['MSE', tf.keras.metrics.MeanSquaredError()],
+            ['RMSE', tf.keras.metrics.RootMeanSquaredError()]
+        ]
+        for metric in tf_metrics:
+            metric[1].update_state(mos, predictions)
+            print(f'{metric[0]}: {metric[1].result():.4f}')
 
-        mae = mae.result()
-        mse = mse.result()
-        rmse = rmse.result()
-
-        rmse = tf.sqrt(mse).numpy()
-        emd = models.emd(mos, predictions).numpy()
-
-        print(f"MAE: {mae:.4f}")
-        print(f"MSE: {mse:.4f}")
-        print(f"RMSE: {rmse:.4f}")
-        print(f"EMD: {emd:.4f}")
+        print(f"EMD: {wasserstein_distance(mos, predictions):.4f}")
+        print(f'PLCC: {pearsonr(mos, predictions)[0]:.4f}')
+        print(f'SRCC: {spearmanr(mos, predictions)[0]:.4f}')
+        print(f'KRCC: {kendalltau(mos, predictions)[0]:.4f}')
 
         mae = np.abs(predictions - mos)
         print(f"highest error: {np.max(mae)}")
