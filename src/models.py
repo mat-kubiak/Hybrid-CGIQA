@@ -25,7 +25,7 @@ def _dense_blocks(input_layer, units):
         x = layers.Dropout(DROPOUT_DENSE)(x)
     return x
 
-def channel_attention(input):
+def _multi_channel_attention(input):
     i_shape = keras.backend.int_shape(input)
     channels = i_shape[-1]
 
@@ -37,11 +37,13 @@ def channel_attention(input):
 
     # avg
     a = layers.AveragePooling2D(pool_size=pool)(input)
+    a = layers.Flatten()(a)
     a = d1(a)
     a = d2(a)
 
     # max
     m = layers.MaxPooling2D(pool_size=pool)(input)
+    m = layers.Flatten()(m)
     m = d1(m)
     m = d2(m)
 
@@ -121,7 +123,7 @@ def _hidden_layers(input_layer):
     c = layers.Conv2D(c_channels // 4, (1,1), padding='same', activation=ACT_CNN, kernel_regularizer=L2_CNN)(c)
     c = layers.BatchNormalization()(c)
 
-    c = channel_attention(c)
+    c = _multi_channel_attention(c)
     c = _dense_blocks(c, [256, 128, 64])
 
     # merge
