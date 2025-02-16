@@ -134,13 +134,10 @@ def _hidden_layers(input_layer):
 def emd(y_true, y_pred):
     return tf.reduce_mean(tf.abs(y_true - y_pred))
 
-def init_model_continuous(height, width, gaussian=0):
+def init_model_continuous(height, width):
     input_layer = layers.Input(shape=(height, width, 3))
     hidden_layers = _hidden_layers(input_layer)
     output_layer = layers.Dense(units=1, activation='linear')(hidden_layers)
-
-    if gaussian != 0:
-        output_layer = layers.GaussianNoise(gaussian)(output_layer)
 
     model = keras.Model(inputs=input_layer, outputs=output_layer)
 
@@ -184,10 +181,10 @@ def init_model_categorical(height, width):
 
     return model
 
-def init_model(height, width, is_categorical, gaussian=0):
+def init_model(height, width, is_categorical):
     if is_categorical:
         return init_model_categorical(height, width)
-    return init_model_continuous(height, width, gaussian=gaussian)
+    return init_model_continuous(height, width)
 
 def load_model(path):
     return keras.models.load_model(path)

@@ -38,7 +38,7 @@ FIT_BATCH_SIZE = 32
 VAL_BATCH_SIZE = 32
 EPOCHS = 50
 IS_CATEGORICAL = False
-GAUSSIAN_NOISE = 0
+LABEL_NOISE = 0.1
 
 # if set, limits data to n first samples
 FIT_LIMIT = None
@@ -103,7 +103,7 @@ def log_hparams():
         'optimizer': model.optimizer.__class__.__name__,
         'trainable_params': model.count_params(),
         'loss': model.loss.__class__.__name__,
-        'label-noise': GAUSSIAN_NOISE,
+        'label-noise': LABEL_NOISE,
     }
 
     print(hparams)
@@ -125,7 +125,7 @@ def initialize_model():
             sys.exit(-1)
     else:
         try:
-            model = models.init_model(MODEL_HEIGHT, MODEL_WIDTH, IS_CATEGORICAL, gaussian=GAUSSIAN_NOISE)
+            model = models.init_model(MODEL_HEIGHT, MODEL_WIDTH, IS_CATEGORICAL)
             tf.keras.utils.plot_model(model, to_file=f"{OUTPUT_DIR}/arch.png", show_shapes=True, show_dtype=True, show_layer_names=True)
             tracker.logprint(f"Initialized new model")
         except Exception as e:
@@ -138,12 +138,16 @@ def initialize_model():
 
 def load_val_image(path, label):
     image = images.load_image(path, MODEL_HEIGHT, MODEL_WIDTH)
-    return image, label * 20
+    return image, label
 
 def load_fit_image(path, label):
     image = images.load_image(path, HEIGHT, WIDTH)
+    image = tf.image.random_flip_left_right(image, seed=SEED)
     image = images.random_crop_image(image, MODEL_HEIGHT, MODEL_WIDTH)
-    return image, label * 20
+
+    noise = tf.random.uniform(shape=(), minval=-LABEL_NOISE, maxval=LABEL_NOISE)
+
+    return image, label + noise
 
 def main():
     global model, tracker
