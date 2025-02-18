@@ -2,6 +2,11 @@ import tensorflow as tf
 from tensorflow.keras.layers import Layer
 
 class RGBToHSV(Layer):
+    """
+    Simple layer that computes RGB input image into HSV space.
+    
+    In case you want to use histograms, we found out that they are way more effective in the HSV space.
+    """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 

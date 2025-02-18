@@ -19,6 +19,11 @@ def _compute_histogram(values, value_range, nbins=256):
     return histogram
 
 class NormalizedHistogram(tf.keras.layers.Layer):
+    """Custom histogram layer that outputs normalized info
+
+    This layer can work with images of any dimensions and any number of channels,
+    provided that it is in the 'channels-last' format.
+    """
     def __init__(self, nbins=256, **kwargs):
         super().__init__(**kwargs)
         self.nbins = nbins

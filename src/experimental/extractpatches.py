@@ -1,6 +1,14 @@
 import tensorflow as tf
 
 class ExtractPatches(tf.keras.layers.Layer):
+    """
+    Custom layer that slices 4d tensor into equal-size patches along the 2nd and 3rd dimension.
+    It works on any dimension shape, and possibly on unfixed size (None, None, None, channels).
+
+    Resulting patches are stacked along the channel dimensions.
+    Because the NormalizedHistogram layer can take any number of channels, they can be easily combined to compute histograms of individual patches of images.
+    We ended up not using it, because the number of patches can get very high very quickly.
+    """
     def __init__(self, grid_size=(4, 4), **kwargs):
         super().__init__(**kwargs)
         self.grid_size = grid_size

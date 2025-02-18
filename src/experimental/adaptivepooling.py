@@ -1,6 +1,15 @@
 import tensorflow as tf
 
 class AdaptiveAveragePooling2D(tf.keras.layers.Layer):
+    """
+    Custom implementation of adaptive average pooling 2D.
+
+    This layer can take 4d tensors of any dimensions,
+    and its output will always be (None, grid_size, grid_size, channels)
+
+    We ended up using the non-layer implementation, which only works when input is fixed size.
+    This works even on shape (None, None, None, channels).
+    """
     def __init__(self, grid_size=2, **kwargs):
         super().__init__(**kwargs)
         self.grid_size = grid_size
