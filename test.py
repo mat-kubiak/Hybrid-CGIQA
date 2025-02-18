@@ -13,8 +13,13 @@ import images, labels, models
 MODEL_NAME = ''
 OUTPUT_DIR = f'{PROJECT_DIR}/output/{MODEL_NAME}'
 MODEL_PATH = f'{OUTPUT_DIR}/model.keras'
-RESULTS_FILE = f'{OUTPUT_DIR}/predictions.npy'
-HISTOGRAM_FILE = f'{OUTPUT_DIR}/histogram.png'
+
+# can be set to 'movie' or 'game' to enforce testing on only one type of image
+IMAGE_TYPE = ''
+
+floor = '_' if IMAGE_TYPE != '' else ''
+RESULTS_FILE = f'{OUTPUT_DIR}/predictions{floor}{IMAGE_TYPE}.npy'
+HISTOGRAM_FILE = f'{OUTPUT_DIR}/histogram{floor}{IMAGE_TYPE}.png'
 
 DATA_PATH = f'{PROJECT_DIR}/data'
 MOS_PATH = f'{DATA_PATH}/mos.csv'
@@ -38,8 +43,33 @@ def load_image(path, label):
     image = images.load_image(path, HEIGHT, WIDTH)
     return image, label
 
+def filter_data(img_paths, mos):
+    img_names = [os.path.basename(path) for path in img_paths]
+
+    f_paths = []
+    f_mos = []
+    for i in range(len(img_names)):
+        if IMAGE_TYPE in img_names[i]:
+            f_paths.append(img_paths[i])
+            f_mos.append(mos[i])
+
+    return (f_paths, f_mos)
+
 def main():
     global HEIGHT, WIDTH, IS_CATEGORICAL
+
+    img_paths = images.get_image_list(IMG_DIRPATH)
+    mos = labels.load_continuous(MOS_PATH, IMG_DIRPATH)
+    print(f"Detected {len(mos)} labels and {len(img_paths)} images")
+
+    if LIMIT != None and LIMIT < len(mos):
+        print(f"Limited images to {LIMIT}")
+        mos = mos[:LIMIT]
+        img_paths = img_paths[:LIMIT]
+
+    if IMAGE_TYPE != '':
+        img_paths, mos = filter_data(img_paths, mos)
+        print(f"Limiting image type to '{IMAGE_TYPE}': detected {len(mos)} images")
 
     if not os.path.isfile(MODEL_PATH):
         print("Fatal error: model could not be found")
@@ -59,15 +89,6 @@ def main():
     if model.output_shape[-1] == 41:
         print(f"Testing for classification models not included, sorry!")
         exit()
-
-    img_paths = images.get_image_list(IMG_DIRPATH)
-    mos = labels.load(MOS_PATH, IMG_DIRPATH, IS_CATEGORICAL)
-    print(f"Detected {len(mos)} labels and {len(img_paths)} images")
-
-    if LIMIT != None and LIMIT < len(mos):
-        print(f"Limited images to {LIMIT}")
-        mos = mos[:LIMIT]
-        img_paths = img_paths[:LIMIT]
 
     dataset = (tf.data.Dataset.from_tensor_slices((img_paths, mos))
         .map(load_image)
