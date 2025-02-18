@@ -22,7 +22,7 @@ def _dense_blocks(input_layer, units):
     for u in units:
         x = layers.Dense(units=u, activation=ACT_DENSE, kernel_regularizer=L2_DENSE)(x)
         x = layers.BatchNormalization()(x)
-        x = layers.Dropout(DROPOUT_DENSE)(x)
+        x = layers.Dropout(DROPOUT_DENSE, seed=SEED)(x)
     return x
 
 def _multi_channel_attention(input):
@@ -151,7 +151,7 @@ def init_model_continuous(height, width):
     )
 
     model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=1e-4),
+        optimizer=keras.optimizers.Adam(learning_rate=5e-4),
         loss=keras.losses.MeanSquaredError(),
         metrics=[
             keras.metrics.RootMeanSquaredError(),
