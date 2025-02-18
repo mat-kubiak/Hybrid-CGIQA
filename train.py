@@ -38,7 +38,7 @@ FIT_BATCH_SIZE = 32
 VAL_BATCH_SIZE = 32
 EPOCHS = 50
 IS_CATEGORICAL = False
-LABEL_NOISE = 0.1
+LABEL_NOISE = 0.12
 
 # if set, limits data to n first samples
 FIT_LIMIT = None
@@ -142,11 +142,9 @@ def load_val_image(path, label):
 
 def load_fit_image(path, label):
     image = images.load_image(path, HEIGHT, WIDTH)
-    image = tf.image.random_flip_left_right(image, seed=SEED)
-    image = images.random_crop_image(image, MODEL_HEIGHT, MODEL_WIDTH)
+    image = tf.image.random_crop(image, [MODEL_HEIGHT, MODEL_WIDTH, 3], seed=SEED)
 
     noise = tf.random.uniform(shape=(), minval=-LABEL_NOISE, maxval=LABEL_NOISE)
-
     return image, label + noise
 
 def main():
