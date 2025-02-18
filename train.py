@@ -36,8 +36,8 @@ MODEL_WIDTH = 224
 
 FIT_BATCH_SIZE = 32
 VAL_BATCH_SIZE = 32
-EPOCHS = 50
-LABEL_NOISE = 0.12
+EPOCHS = 40
+LABEL_NOISE = 0.1
 
 # if set, limits data to n first samples
 FIT_LIMIT = None
