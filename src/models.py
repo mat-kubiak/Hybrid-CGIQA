@@ -69,13 +69,7 @@ def _hidden_layers(input_layer):
     # nima route
     nima = load_pretrained_nima()
 
-    names = [
-        'global_average_pooling2d',
-        'dense',
-    ]
-    output_layers = [nima.get_layer(name).output for name in names]
-
-    nima = keras.Model(inputs=nima.input, outputs=output_layers, name="nima_backbone")
+    nima = keras.Model(inputs=nima.input, outputs=nima.layers[-3].output, name="nima_backbone")
 
     for layer in nima.layers:
         layer.trainable = False
@@ -83,7 +77,6 @@ def _hidden_layers(input_layer):
     # [0,255] -> [-1,1]
     n = layers.Rescaling(scale=1.0/127.5, offset=-1.0)(input_layer)
     n = nima(n)
-    n = layers.Concatenate()(n)
     n = _dense_blocks(n, [256, 128, 64])
 
     # conv route
