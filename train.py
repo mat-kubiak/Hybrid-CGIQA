@@ -37,7 +37,6 @@ MODEL_WIDTH = 224
 FIT_BATCH_SIZE = 32
 VAL_BATCH_SIZE = 32
 EPOCHS = 50
-IS_CATEGORICAL = False
 LABEL_NOISE = 0.12
 
 # if set, limits data to n first samples
@@ -72,7 +71,7 @@ def initialize_resources():
     global fit_mos, fit_imgs, val_mos, val_imgs, batches_per_epoch
 
     fit_imgs = images.get_image_list(FIT_IMG_DIR)
-    fit_mos = labels.load(MOS_FILE, FIT_IMG_DIR, IS_CATEGORICAL)
+    fit_mos = labels.load_continuous(MOS_FILE, FIT_IMG_DIR)
     tracker.logprint(f"Detected {len(fit_mos)} labels and {len(fit_imgs)} images")
 
     if FIT_LIMIT != None:
@@ -83,7 +82,7 @@ def initialize_resources():
     extra_batch_required = len(fit_imgs) % FIT_BATCH_SIZE != 0
     batches_per_epoch = math.floor(len(fit_imgs)/FIT_BATCH_SIZE) + extra_batch_required
 
-    val_mos = labels.load(MOS_FILE, VAL_IMG_DIR, IS_CATEGORICAL)
+    val_mos = labels.load_continuous(MOS_FILE, VAL_IMG_DIR)
     val_imgs = images.get_image_list(VAL_IMG_DIR)
     tracker.logprint(f"Detected {len(val_mos)} validation labels and validation {len(val_imgs)} images")
 
@@ -98,7 +97,6 @@ def log_hparams():
         'resolution': f'{HEIGHT}x{WIDTH}',
         'batch_size': FIT_BATCH_SIZE,
         'epochs': EPOCHS,
-        'output': 'categorical' if IS_CATEGORICAL else 'numerical',
         'total_layers': len(model.layers),
         'optimizer': model.optimizer.__class__.__name__,
         'trainable_params': model.count_params(),
@@ -125,7 +123,7 @@ def initialize_model():
             sys.exit(-1)
     else:
         try:
-            model = models.init_model(MODEL_HEIGHT, MODEL_WIDTH, IS_CATEGORICAL)
+            model = models.init_model_continuous(MODEL_HEIGHT, MODEL_WIDTH)
             tf.keras.utils.plot_model(model, to_file=f"{OUTPUT_DIR}/arch.png", show_shapes=True, show_dtype=True, show_layer_names=True)
             tracker.logprint(f"Initialized new model")
         except Exception as e:

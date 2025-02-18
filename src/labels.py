@@ -38,8 +38,3 @@ def load_categorical(mos_path, image_dir):
 def load_continuous(mos_path, image_dir):
     mos = _load_data(mos_path, image_dir)
     return mos
-
-def load(mos_path, image_dir, is_categorical):
-    if is_categorical:
-        return load_categorical(mos_path, image_dir)
-    return load_continuous(mos_path, image_dir)

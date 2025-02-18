@@ -56,9 +56,9 @@ def main():
     HEIGHT, WIDTH = model.input_shape[1:3]
     print(f"Found dimensions: width: {WIDTH}, height: {HEIGHT}")
 
-    IS_CATEGORICAL = model.output_shape[-1] == 41
-    type_text = 'classification' if IS_CATEGORICAL else 'regression' 
-    print(f"Detected model is a: {type_text} model")
+    if model.output_shape[-1] == 41:
+        print(f"Testing for classification models not included, sorry!")
+        exit()
 
     img_paths = images.get_image_list(IMG_DIRPATH)
     mos = labels.load(MOS_PATH, IMG_DIRPATH, IS_CATEGORICAL)
@@ -75,63 +75,49 @@ def main():
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
 
-    if IS_CATEGORICAL:
-        predictions = model.predict(dataset)
-        predictions = np.argmax(predictions, axis=1)
-        mos = np.argmax(mos, axis=1)
+    predictions = model.predict(dataset).flatten()
+    np.save(RESULTS_FILE, predictions)
 
-        accuracy = [predictions[i] == mos[i] for i in range(len(predictions))]
-        accuracy = np.sum(accuracy) / len(predictions) * 100
+    params, covariance = curve_fit(logistic_function, predictions, mos, p0=[1, 1, 1, 1, 1])
+    beta1, beta2, beta3, beta4, beta5 = params
 
-        for i in range(min(PRINT_LIMIT, len(predictions))):
-            print(f"{predictions[i]} {mos[i]}")
+    print("Fitted Parameters:")
+    print(f"β1 = {beta1}, β2 = {beta2}, β3 = {beta3}, β4 = {beta4}, β5 = {beta5}")
 
-        print(f"accuracy: {accuracy:.2f}%")
+    predictions = logistic_function(predictions, *params)
 
-    else:
-        predictions = model.predict(dataset).flatten()
-        np.save(RESULTS_FILE, predictions)
+    tf_metrics = [
+        ['MAE', tf.keras.metrics.MeanAbsoluteError()],
+        ['MSE', tf.keras.metrics.MeanSquaredError()],
+        ['RMSE', tf.keras.metrics.RootMeanSquaredError()]
+    ]
+    for metric in tf_metrics:
+        metric[1].update_state(mos, predictions)
+        print(f'{metric[0]}: {metric[1].result():.4f}')
 
-        params, covariance = curve_fit(logistic_function, predictions, mos, p0=[1, 1, 1, 1, 1])
-        beta1, beta2, beta3, beta4, beta5 = params
+    print(f"EMD: {wasserstein_distance(mos, predictions):.4f}")
+    print(f'PLCC: {pearsonr(mos, predictions)[0]:.4f}')
+    print(f'SRCC: {spearmanr(mos, predictions)[0]:.4f}')
+    print(f'KRCC: {kendalltau(mos, predictions)[0]:.4f}')
 
-        print("Fitted Parameters:")
-        print(f"β1 = {beta1}, β2 = {beta2}, β3 = {beta3}, β4 = {beta4}, β5 = {beta5}")
+    mae = np.abs(predictions - mos)
+    print(f"highest error: {np.max(mae)}")
 
-        predictions = logistic_function(predictions, *params)
+    merged = np.stack((predictions, mos, mae, img_paths), axis=-1)
+    indices = np.argsort(merged[:, 2].astype(float))[::-1]
+    merged = merged[indices]
 
-        tf_metrics = [
-            ['MAE', tf.keras.metrics.MeanAbsoluteError()],
-            ['MSE', tf.keras.metrics.MeanSquaredError()],
-            ['RMSE', tf.keras.metrics.RootMeanSquaredError()]
-        ]
-        for metric in tf_metrics:
-            metric[1].update_state(mos, predictions)
-            print(f'{metric[0]}: {metric[1].result():.4f}')
+    print(f"Top {PRINT_LIMIT} predictions with highest error:")
+    for i in range(PRINT_LIMIT):
+        print(f"{i+1}. {float(merged[i,0]):.3f} for {float(merged[i,1]):.3f} (error {float(merged[i,2]):.4f}): {merged[i,3]}")
 
-        print(f"EMD: {wasserstein_distance(mos, predictions):.4f}")
-        print(f'PLCC: {pearsonr(mos, predictions)[0]:.4f}')
-        print(f'SRCC: {spearmanr(mos, predictions)[0]:.4f}')
-        print(f'KRCC: {kendalltau(mos, predictions)[0]:.4f}')
-
-        mae = np.abs(predictions - mos)
-        print(f"highest error: {np.max(mae)}")
-
-        merged = np.stack((predictions, mos, mae, img_paths), axis=-1)
-        indices = np.argsort(merged[:, 2].astype(float))[::-1]
-        merged = merged[indices]
-
-        print(f"Top {PRINT_LIMIT} predictions with highest error:")
-        for i in range(PRINT_LIMIT):
-            print(f"{i+1}. {float(merged[i,0]):.3f} for {float(merged[i,1]):.3f} (error {float(merged[i,2]):.4f}): {merged[i,3]}")
-
-        # histogram
-        plt.hist(mos, bins=100)
-        plt.hist(predictions, bins=100)
-        plt.xlabel('Value')
-        plt.ylabel('Frequency')
-        plt.title('Histogram')
-        plt.savefig(HISTOGRAM_FILE)
+    # histogram
+    plt.hist(mos, bins=100)
+    plt.hist(predictions, bins=100)
+    plt.xlabel('Value')
+    plt.ylabel('Frequency')
+    plt.title('Histogram')
+    plt.savefig(HISTOGRAM_FILE)
 
 if __name__ == '__main__':
     main()

@@ -2,22 +2,20 @@ import os, sys, json
 import tensorflow as tf
 from tensorflow.keras.utils import plot_model
 
-project_dir = os.path.dirname(os.path.abspath(__file__))
-project_dir = os.path.dirname(project_dir)
-sys.path.append(f'{project_dir}/src')
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_DIR = os.path.dirname(PROJECT_DIR)
+sys.path.append(f'{PROJECT_DIR}/src')
 
 import models
 
-MODEL_PATH = f''
+MODEL_NAME = ''
+MODEL_PATH = f'{PROJECT_DIR}/output/{MODEL_NAME}/model.keras'
 
 HEIGHT = 224
 WIDTH = 224
 
 def main():
-    if len(MODEL_PATH) != 0:
-        model = models.load_model(MODEL_PATH)
-    else:
-        model = models.init_model_continuous(HEIGHT, WIDTH)
+    model = models.load_model(MODEL_PATH)
 
     model.summary()
 

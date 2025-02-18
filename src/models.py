@@ -4,7 +4,6 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.regularizers import l2
 
-from ordinalcrossentropy import OrdinalCrossentropy
 from nima import load_pretrained_nima
 
 SEED = 23478
@@ -163,25 +162,18 @@ def init_model_continuous(height, width):
 
 def init_model_categorical(height, width):
     input_layer = layers.Input(shape=(height, width, 3))
-    preprocessed = layers.Lambda(lambda x: x*2 - 1.0, name="preprocessing")(input_layer)
-
-    hidden_layers = _hidden_layers(preprocessed)
+    hidden_layers = _hidden_layers(input_layer)
     output_layer = layers.Dense(units=41, activation='softmax')(hidden_layers)
 
     model = keras.Model(inputs=input_layer, outputs=output_layer)
 
     model.compile(
         optimizer=keras.optimizers.Adam(),
-        loss=OrdinalCrossentropy(),
+        loss=keras.losses.CategoricalCrossentropy(),
         metrics=["accuracy"]
     )
 
     return model
-
-def init_model(height, width, is_categorical):
-    if is_categorical:
-        return init_model_categorical(height, width)
-    return init_model_continuous(height, width)
 
 def load_model(path):
     return keras.models.load_model(path)
