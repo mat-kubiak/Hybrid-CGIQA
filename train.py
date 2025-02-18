@@ -8,8 +8,8 @@ sys.path.append(f'{PROJECT_DIR}/src')
 
 import images, labels, models
 from tracker import Tracker
-from batchcallback import BatchCallback
-from weights_histogram_callback import WeightsHistogramCallback
+from batch_callback import BatchCallback
+from weights_callback import WeightsHistogramCallback
 
 # input
 DATA_DIR = f'{PROJECT_DIR}/data'
