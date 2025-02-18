@@ -11,7 +11,10 @@ sys.path.append(f'{PROJECT_DIR}/src')
 import images, labels, models
 
 MODEL_NAME = ''
-MODEL_PATH = f'{PROJECT_DIR}/output/{MODEL_NAME}/model.keras'
+OUTPUT_DIR = f'{PROJECT_DIR}/output/{MODEL_NAME}'
+MODEL_PATH = f'{OUTPUT_DIR}/model.keras'
+RESULTS_FILE = f'{OUTPUT_DIR}/predictions.npy'
+HISTOGRAM_FILE = f'{OUTPUT_DIR}/histogram.png'
 
 DATA_PATH = f'{PROJECT_DIR}/data'
 MOS_PATH = f'{DATA_PATH}/mos.csv'
@@ -87,6 +90,7 @@ def main():
 
     else:
         predictions = model.predict(dataset).flatten()
+        np.save(RESULTS_FILE, predictions)
 
         params, covariance = curve_fit(logistic_function, predictions, mos, p0=[1, 1, 1, 1, 1])
         beta1, beta2, beta3, beta4, beta5 = params
@@ -127,7 +131,7 @@ def main():
         plt.xlabel('Value')
         plt.ylabel('Frequency')
         plt.title('Histogram')
-        plt.savefig('histogram.png')
+        plt.savefig(HISTOGRAM_FILE)
 
 if __name__ == '__main__':
     main()
