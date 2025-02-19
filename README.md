@@ -38,7 +38,7 @@ pip install tensorflow scikit-learn matplotlib flask opencv-python
 Afterwards, images from CGIQA-6K should be placed in the `data/images/` directory.
 In case of using another dataset of choice, the file `data/mos.csv` should also be replaced by one containing MOS scores of the new dataset.
 
-> Unfortunately we cannot include those images here, as the whole dataset is 2.5GB in size. Please refer for it here: [text](https://github.com/zzc-1998/CGIQA6K).
+> Unfortunately we cannot include those images here, as the whole dataset is 2.5GB in size. Please refer for it [here](https://github.com/zzc-1998/CGIQA6K).
 
 After providing all required data, run these scripts:
 
