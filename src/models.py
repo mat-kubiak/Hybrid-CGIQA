@@ -131,7 +131,7 @@ def init_model_continuous(height, width):
 
     model = keras.Model(inputs=input_layer, outputs=output_layer)
 
-    initial_learning_rate = 1e-4  # Start higher
+    initial_learning_rate = 1e-4
     decay_steps = 1000
     decay_rate = 0.9
 

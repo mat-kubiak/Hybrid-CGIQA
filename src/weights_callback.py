@@ -8,7 +8,6 @@ class WeightsHistogramCallback(tf.keras.callbacks.Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         with self.writer.as_default():
-            # Log histograms for each layer
             for layer in self.model.layers:       
                 if layer.trainable and layer.weights:
                     weights = layer.weights[0].numpy()
