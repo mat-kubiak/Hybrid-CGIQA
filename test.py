@@ -17,6 +17,8 @@ MODEL_PATH = f'{OUTPUT_DIR}/model.keras'
 # can be set to 'movie' or 'game' to enforce testing on only one type of image
 IMAGE_TYPE = ''
 
+# USER PARAMS END HERE
+
 floor = '_' if IMAGE_TYPE != '' else ''
 RESULTS_FILE = f'{OUTPUT_DIR}/predictions{floor}{IMAGE_TYPE}.npy'
 HISTOGRAM_FILE = f'{OUTPUT_DIR}/histogram{floor}{IMAGE_TYPE}.png'

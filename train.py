@@ -43,6 +43,8 @@ LABEL_NOISE = 0.1
 FIT_LIMIT = None
 VAL_LIMIT = None
 
+# USER PARAMS END HERE
+
 tracker = None
 model = None
 fit_mos = None
