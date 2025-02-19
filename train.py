@@ -142,7 +142,7 @@ def load_fit_image(path, label):
     image = images.load_image(path, HEIGHT, WIDTH)
     image = tf.image.random_crop(image, [MODEL_HEIGHT, MODEL_WIDTH, 3], seed=SEED)
 
-    noise = tf.random.uniform(shape=(), minval=-LABEL_NOISE, maxval=LABEL_NOISE)
+    noise = tf.random.normal(shape=(), mean=0.0, stddev=LABEL_NOISE)
     return image, label + noise
 
 def main():
