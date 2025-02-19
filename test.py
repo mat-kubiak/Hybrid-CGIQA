@@ -133,12 +133,13 @@ def main():
         print(f"{i+1}. {float(merged[i,0]):.3f} for {float(merged[i,1]):.3f} (error {float(merged[i,2]):.4f}): {merged[i,3]}")
 
     # histogram
-    plt.hist(mos, bins=100)
-    plt.hist(predictions, bins=100)
-    plt.xlabel('Value')
+    bins = 30
+    plt.hist(mos, bins=bins, histtype='step', color='red', label='True')
+    plt.hist(predictions, bins=bins, histtype='step', color='blue', label='Predicted')
+    plt.xlabel('MOS Score')
     plt.ylabel('Frequency')
-    plt.title('Histogram')
-    plt.savefig(HISTOGRAM_FILE)
+    plt.legend()
+    plt.savefig(HISTOGRAM_FILE, dpi=300)
 
 if __name__ == '__main__':
     main()
